@@ -1,0 +1,4 @@
+pregunta,respuesta_conocida,documento,pagina,tipo
+¿Cómo se define la media aritmética?,Suma de los valores dividida por el número de observaciones.,publicos/estadistica_demo.txt,1,en_corpus
+¿Qué indica la mediana?,Es el valor central de los datos ordenados.,publicos/estadistica_demo.txt,1,en_corpus
+¿Cuál fue la población exacta de Marte en 2025?,No está en las fuentes.,,,fuera_de_corpus
