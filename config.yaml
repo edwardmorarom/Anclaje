@@ -1,0 +1,17 @@
+docs_dir: docs
+index_dir: indice
+results_dir: resultados
+embedding_model: BAAI/bge-m3
+chunk_size: 1000
+chunk_overlap: 150
+top_k: 4
+similarity_threshold: 0.45
+llm_model: deepseek-chat
+temperature: 0.0
+protocol: protocolo/v1.md
+max_tokens: 1800
+timeout: 60
+sweep:
+  chunk_sizes: [600, 1000]
+  top_ks: [1, 4]
+  embedding_models: [BAAI/bge-m3, intfloat/multilingual-e5-base]

@@ -1,0 +1,10 @@
+[project]
+name = "anclaje"
+version = "0.1.0"
+description = "Contexto cerrado con citas verificadas y evaluación local"
+requires-python = ">=3.11,<3.14"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
