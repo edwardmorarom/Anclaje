@@ -48,22 +48,27 @@ def verificar_citas(citas: list[dict], fuentes: list[Fragmento]) -> list[Cita]:
     return verified
 
 
+def validar_salida(raw: str | dict) -> dict:
+    data = json.loads(raw) if isinstance(raw, str) else raw
+    if not isinstance(data, dict) or set(data) != {"respuesta", "abstencion", "citas"}:
+        raise ValueError
+    if not isinstance(data["respuesta"], str) or type(data["abstencion"]) is not bool:
+        raise ValueError
+    if not isinstance(data["citas"], list):
+        raise ValueError
+    for cite in data["citas"]:
+        if not isinstance(cite, dict) or set(cite) != {"documento", "pagina", "cita_textual"}:
+            raise ValueError
+        if not isinstance(cite["documento"], str) or not isinstance(cite["cita_textual"], str):
+            raise ValueError
+        if type(cite["pagina"]) is not int or cite["pagina"] < 1:
+            raise ValueError
+    return data
+
+
 def interpretar(raw: str | dict, fuentes: list[Fragmento]) -> Resultado:
     try:
-        data = json.loads(raw) if isinstance(raw, str) else raw
-        if not isinstance(data, dict) or set(data) != {"respuesta", "abstencion", "citas"}:
-            raise ValueError
-        if not isinstance(data["respuesta"], str) or type(data["abstencion"]) is not bool:
-            raise ValueError
-        if not isinstance(data["citas"], list):
-            raise ValueError
-        for cite in data["citas"]:
-            if not isinstance(cite, dict) or set(cite) != {"documento", "pagina", "cita_textual"}:
-                raise ValueError
-            if not isinstance(cite["documento"], str) or not isinstance(cite["cita_textual"], str):
-                raise ValueError
-            if type(cite["pagina"]) is not int or cite["pagina"] < 1:
-                raise ValueError
+        data = validar_salida(raw)
     except (ValueError, TypeError, KeyError):
         return Resultado(motivo="salida_json_invalida")
     cites = verificar_citas(data["citas"], fuentes)
@@ -116,13 +121,12 @@ def control(pregunta: str, cliente: ClienteLLM) -> Resultado:
     ]
     raw = cliente.generar(messages)
     try:
-        data = json.loads(raw) if isinstance(raw, str) else raw
-        if not isinstance(data, dict) or set(data) != {"respuesta", "abstencion", "citas"}:
-            raise ValueError
-        if not isinstance(data["respuesta"], str) or not data["respuesta"].strip():
-            raise ValueError
-        if type(data["abstencion"]) is not bool or not isinstance(data["citas"], list):
+        data = validar_salida(raw)
+        if not data["respuesta"].strip():
             raise ValueError
     except (ValueError, TypeError, KeyError):
         raise ValueError("El tratamiento A devolvió JSON inválido; no cuenta como abstención correcta.") from None
-    return Resultado(ABSTENCION if data["abstencion"] else data["respuesta"], data["abstencion"], motivo="control_sin_fuentes")
+    return Resultado(
+        ABSTENCION if data["abstencion"] else data["respuesta"], data["abstencion"],
+        verificar_citas(data["citas"], []), motivo="control_sin_fuentes",
+    )

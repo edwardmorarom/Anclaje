@@ -34,6 +34,12 @@ class Config:
     sweep: dict = field(default_factory=dict)
 
     def __post_init__(self):
+        if any(type(value) is not int for value in (self.chunk_size, self.chunk_overlap, self.top_k, self.max_tokens)):
+            raise ValueError("Tamaño, solapamiento, top_k y max_tokens deben ser enteros.")
+        if any(type(value) not in (int, float) for value in (self.similarity_threshold, self.temperature, self.timeout)):
+            raise ValueError("Umbral, temperatura y tiempo de espera deben ser numéricos.")
+        if not self.embedding_model or not isinstance(self.embedding_model, str) or not isinstance(self.llm_model, str) or not self.llm_model:
+            raise ValueError("Los nombres de modelos deben ser textos no vacíos.")
         if not 0 <= self.chunk_overlap < self.chunk_size:
             raise ValueError("Se requiere 0 <= chunk_overlap < chunk_size.")
         if self.top_k < 1 or not -1 <= self.similarity_threshold <= 1:

@@ -73,6 +73,9 @@ def leer_corpus(docs_dir: Path) -> list[Pagina]:
     for origin in ("publicos", "contraparte"):
         folder = docs_dir / origin
         folder.mkdir(exist_ok=True)
+        if folder.resolve() != docs_dir.resolve() / origin:
+            warnings.warn(f"Se omite carpeta de origen enlazada: {origin}", stacklevel=2)
+            continue
         for path in sorted(folder.rglob("*")):
             if not path.is_file() or path.name == ".gitkeep":
                 continue

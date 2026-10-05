@@ -9,9 +9,11 @@ VERSION_INDICE = 1
 
 
 class Indice:
-    def __init__(self, directorio: Path, embedder: Embedder):
+    def __init__(self, directorio: Path, embedder: Embedder, *, chunk_size=None, chunk_overlap=None):
         self.directorio = Path(directorio)
         self.embedder = embedder
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
         self._client = None
 
     def _abrir(self):
@@ -35,6 +37,10 @@ class Indice:
             raise ValueError("El índice está incompleto o desactualizado. Ejecuta reindexar.")
         if meta.get("embedding_model") != self.embedder.nombre:
             raise ValueError("El modelo configurado difiere del índice. Ejecuta reindexar.")
+        if any(expected is not None and meta.get(name) != expected for name, expected in (
+            ("chunk_size", self.chunk_size), ("chunk_overlap", self.chunk_overlap),
+        )):
+            raise ValueError("La fragmentación configurada difiere del índice. Ejecuta reindexar.")
         return collection
 
     def reconstruir(self, fragments: list[Fragmento], *, chunk_size: int, chunk_overlap: int):
@@ -54,7 +60,8 @@ class Indice:
                 ids=[f.id for f in batch], documents=[f.texto for f in batch],
                 metadatas=[f.metadata() for f in batch], embeddings=vectors[start:start + 128],
             )
-        collection.modify(metadata={**meta, "listo": True})
+        final_meta = {key: value for key, value in meta.items() if key != "hnsw:space"}
+        collection.modify(metadata={**final_meta, "listo": True})
 
     def estado(self) -> dict:
         collection = self._coleccion()
