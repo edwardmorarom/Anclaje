@@ -73,7 +73,19 @@ ya presentes en caché: no descargan modelos ni usan una API de embeddings.
 
 ## Comandos
 
-También puedes incorporar documentos desde la **pestaña Fuentes** de la app:
+La app tiene un recorrido con **Anterior**, **Continuar** y acceso a cada paso
+desde el menú lateral. Conserva los borradores al cambiar de pantalla.
+
+| Paso | Qué haces |
+| --- | --- |
+| 1. Inicio | Compruebas documentos, índice, clave y banco. Puedes probar la API con una pregunta sintética. |
+| 2. Fuentes | Seleccionas documentos del computador y los incorporas. |
+| 3. Preparar | Pulsas Preparar documentos para construir el índice local. |
+| 4. Consultar | Pruebas una pregunta conocida, revisas citas y compruebas la abstención. |
+| 5. Evaluar | Agregas preguntas o importas un CSV, ejecutas A/C y descargas resultados. |
+| 6. Memoria | Redactas los seis apartados y guardas o descargas el borrador. |
+
+Puedes incorporar documentos desde el **paso Fuentes** de la app:
 
 1. Pulsa **Elegir carpeta del computador** o pega la ruta. El selector nativo
    requiere Tk y se abre en el computador que ejecuta Streamlit. Puedes elegir
@@ -86,7 +98,7 @@ También puedes incorporar documentos desde la **pestaña Fuentes** de la app:
    solo los documentos seleccionados y se registra su procedencia. Si un nombre
    ya existe con contenido distinto, la copia nueva recibe un sufijo; repetir
    el mismo archivo no duplica su contenido en ese grupo.
-5. Para **C**, pulsa **Actualizar índice**. La app prepara los embeddings
+5. Pulsa **Continuar a preparar** y **Preparar documentos**. La app prepara los embeddings
    localmente y vuelve a habilitar las consultas. Este estado pendiente se
    conserva al recargar la app. El CLI `reindexar` también actualiza ese estado.
 
@@ -96,17 +108,25 @@ seleccionada. A y B se conservan bajo `resultados/evidencias/A/` y
 contexto C. Los temporales Word `~$...`, archivos ocultos y formatos CSV/XLSX se
 omiten del corpus. La app no determina automáticamente si un archivo es público.
 
-La pestaña **Consultar** ofrece C y A; A envía exclusivamente la pregunta al
+El paso **Consultar** ofrece C y A; A envía exclusivamente la pregunta al
 LLM. B se realiza en la herramienta bibliográfica externa elegida. La asignación
 por integrante organiza el trabajo: para comparar tratamientos deben repetir
 la misma pregunta en A, B y C.
 
-La pestaña **Memoria** reproduce los seis apartados de la imagen del enunciado:
+El paso **Evaluar** permite agregar preguntas conocidas y guardarlas en
+`eval/banco.csv`, o importar un CSV existente validando su formato antes de
+reemplazarlo. Muestra la cantidad de preguntas y las que están fuera del corpus.
+Puedes probar el circuito con cliente falso o ejecutar A/C con la API real.
+En demo el banco se guarda por separado bajo `resultados/humo/`.
+
+El paso **Memoria** reproduce los seis apartados de la imagen del enunciado:
 Diagnóstico; Experimento y decisión; El sistema; Evaluación; Qué corrigieron de
 su propio anteproyecto; Declaración de uso de IA. Permite editar, guardar el
 borrador local y descargar Markdown. No completa resultados ni afirmaciones:
 debes aportar tus evidencias y verificar la extensión final de 2 a 4 páginas.
 Los borradores se guardan en `resultados/memoria/`, fuera de Git.
+
+El diagnóstico actualizado y los pendientes están en [PENDIENTES.md](PENDIENTES.md).
 
 ```text
 python -m anclaje reindexar

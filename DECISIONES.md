@@ -23,3 +23,8 @@
 - La memoria reproduce los seis apartados de la imagen compartida y se edita con evidencia real; no se implementa reconocimiento automático de imágenes ni se inventan resultados.
 - Una marca local mantiene las consultas C pendientes tras importar hasta actualizar el índice, incluso al recargar la app.
 - Se ignoran todas las variantes .env, incluida .env copy.example, y se conserva solo la plantilla .env.example; evita incorporar accidentalmente copias de credenciales.
+- La navegación muestra un paso por pantalla con Anterior/Continuar y acceso lateral; los borradores se conservan al cambiar de paso.
+- Importar y preparar son pasos distintos; no se permite avanzar a consulta C con un índice inexistente o pendiente.
+- El inicio comprueba requisitos locales y ofrece una prueba de API que solo se ejecuta al pulsar el botón; no se transmite ningún documento ni se imprime la clave para diagnosticar el proyecto.
+- El banco puede crearse e importarse desde la interfaz; se valida antes de reemplazar el anterior y se separa el banco demo del real.
+- Se desactiva thinking en la llamada a DeepSeek para respetar temperatura 0 y el presupuesto de salida; la documentación actual indica que thinking está activo por defecto y que ignora temperature (https://api-docs.deepseek.com/guides/thinking_mode/).

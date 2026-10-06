@@ -196,3 +196,45 @@ También puedes elegir la carpeta principal `II` y activar **Incluir subcarpetas
 En **Memoria**, completa los seis apartados con evidencia de tu experimento.
 La asignación de responsables organiza el trabajo; la comparación requiere
 ejecutar la misma consulta en A, B y C.
+
+## Recorrido guiado — 6 de octubre de 2026
+
+La interfaz anterior queda reemplazada por seis pasos: **Inicio → Fuentes →
+Preparar → Consultar → Evaluar → Memoria**. Se muestra una pantalla a la vez,
+con progreso, botones Anterior/Continuar y acceso lateral a cualquier paso.
+Los campos y los resultados de la sesión se conservan al volver atrás; la
+memoria tiene además guardado explícito en disco.
+
+Inicio muestra el estado local y ofrece una prueba de conexión a DeepSeek con
+una pregunta sintética, solo al pulsar el botón. Fuentes permite importar; en
+Preparar se construye el índice. Las consultas C quedan deshabilitadas mientras
+falte el índice o haya documentos nuevos por preparar.
+
+Evaluar permite agregar preguntas conocidas o importar un banco CSV validado
+antes de reemplazar el anterior, ejecutar A/C y descargar respuestas para
+revisión manual. El banco de demostración se guarda separado del banco real.
+Los resultados con cliente falso se identifican como pruebas del circuito.
+Las métricas se presentan con denominadores e intervalos de Wilson. B continúa
+en la herramienta bibliográfica externa, según el reparto del equipo.
+
+Se desactiva thinking en la llamada a DeepSeek para respetar temperatura 0;
+la [documentación oficial](https://api-docs.deepseek.com/guides/thinking_mode/)
+indica que thinking está activo por defecto y que ignora temperature.
+Se conservó el modelo configurado en el .env del usuario.
+
+Validación: **86 pruebas pasan sin red ni clave**, con pruebas de navegación,
+conservación de borradores, preparación, evaluación desde la interfaz y formato
+de la llamada al SDK. La suite completa terminó en 12,50 s, con los cinco avisos
+SWIG existentes. La comprobación posterior de interfaz pasó sus ocho pruebas.
+Arranque sintético medido en proceso nuevo: **1,905 s** hasta health y **4,109 s**
+hasta completar la primera pantalla; no mide descarga o carga real de pesos.
+
+Diagnóstico local: dependencias instaladas y clave configurada; **0 documentos
+en el corpus, sin índice real ni banco real de evaluación**. No se llamó a la
+API, no se importaron fuentes reales y no se midió calidad sobre ellas durante
+esta revisión. [PENDIENTES.md](PENDIENTES.md) distingue los pasos para operar de
+las evidencias que todavía hay que producir para entregar la actividad.
+
+Para usar la versión actual, reinicia Streamlit con el comando anterior,
+selecciona Inicio y sigue Continuar. El orden actual para C es **importar en
+Fuentes, preparar en Preparar y preguntar en Consultar**.
