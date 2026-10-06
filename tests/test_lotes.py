@@ -100,6 +100,7 @@ def test_tabla_demo_analiza_guarda_y_reabre_memoria(tmp_path, monkeypatch):
         {"Pregunta": "Otra pregunta", "Respuesta conocida": "Sin datos", "Página informe confirmada": ""},
     ]})
     app = AppTest.from_file(str(root / "app.py"), default_timeout=30).run()
+    app.button(key="confirmar_salida").click().run()
     app.radio(key="paso_activo").set_value("Consultar").run()
     app.radio(key="espacio_consulta").set_value("Tabla de preguntas").run()
     assert not app.exception and not app.error
@@ -110,6 +111,9 @@ def test_tabla_demo_analiza_guarda_y_reabre_memoria(tmp_path, monkeypatch):
     assert len(paths) == 1
     saved = cargar_memoria_agente(paths[0])
     assert len(saved["resultados"]) == 2 and saved["resultados"][0]["coincidencia"] == "Revisar"
+    csv_path = paths[0].parent / saved["archivo_csv"]
+    assert csv_path.is_file()
+    assert len(list(csv.DictReader(io.StringIO(csv_path.read_text(encoding="utf-8-sig")), delimiter=";"))) == 2
     app.radio(key="paso_activo").set_value("Inicio").run()
     app.radio(key="paso_activo").set_value("Consultar").run()
     assert app.radio(key="espacio_consulta").value == "Tabla de preguntas"

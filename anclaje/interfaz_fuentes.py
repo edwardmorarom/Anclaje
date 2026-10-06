@@ -120,6 +120,6 @@ def mostrar_memoria(config):
     if st.button("Guardar borrador", key="guardar_memoria"):
         guardar_memoria(path, contents)
         path.with_suffix(".md").write_text(markdown, encoding="utf-8")
-        st.success("Borrador guardado localmente en resultados/memoria/.")
+        st.success(f"Borrador guardado en: {path.parent}")
     st.download_button("Descargar memoria en Markdown", data=markdown, file_name="memoria_nada_sin_fuente.md",
                        mime="text/markdown", key="descargar_memoria")

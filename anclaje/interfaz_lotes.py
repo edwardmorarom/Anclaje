@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from .embeddings import EmbeddingsLocales, EmbedderFalso
+from .evaluar import sello
 from .llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
 from .lotes import analizar_fila, cargar_memoria_agente, exportar_csv, guardar_memoria_agente
 from .recorrido import estado_proyecto
@@ -66,6 +67,7 @@ def mostrar_lotes(config, indice, demo):
         if report_path and not report_path.is_file():
             raise ValueError("El informe guardado no está disponible. Vuelve a cargarlo antes de analizar.")
         memory.update({"preguntas": questions, "resultados": [], "tratamiento": mode, "origen": origin})
+        memory["archivo_csv"] = f"consultas_{sello()}.csv"
         guardar_memoria_agente(memory_path, memory)
         embedder = (EmbedderFalso() if demo else EmbeddingsLocales(config.embedding_model)) if report_path else None
         progress = st.progress(0, text="Preparando el lote…")
@@ -82,8 +84,10 @@ def mostrar_lotes(config, indice, demo):
                           "error": str(error), "tratamiento": mode, "origen": origin}
             memory["resultados"].append(result)
             guardar_memoria_agente(memory_path, memory)
+            (folder / memory["archivo_csv"]).write_bytes(exportar_csv(memory["resultados"]))
             progress.progress((position + 1) / len(active), text=f"Analizadas {position + 1} de {len(active)} preguntas")
         st.success("Lote guardado. Revisa la comparación y las ubicaciones antes de usarlo como evidencia.")
+        st.caption(f"CSV guardado en: {folder / memory['archivo_csv']}")
     if not ready:
         st.info("Agrega al menos una pregunta. En modo real necesitas la clave; para C, prepara primero el índice.")
     results = memory.get("resultados", [])

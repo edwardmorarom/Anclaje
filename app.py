@@ -4,6 +4,7 @@ INICIO = perf_counter()
 
 import os
 import sys
+import json
 from pathlib import Path
 
 import streamlit as st
@@ -20,6 +21,8 @@ from anclaje.llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
 from anclaje.memoria import TRATAMIENTOS
 from anclaje.recorrido import DESCRIPCIONES, PASOS, estado_proyecto
 from anclaje.responder import control, responder
+from anclaje.salida import elegir_salida
+from anclaje.evaluar import sello
 
 st.set_page_config(page_title="Anclaje · Nada sin fuente", page_icon="⚓", layout="wide")
 aplicar_diseno()
@@ -74,6 +77,10 @@ def mostrar_consulta(config, index, demo):
             client = ClienteFalso() if demo else ClienteDeepSeek(config)
             result = responder(pregunta, config, index, client, origen=origin) if treatment == "C" else control(pregunta, client)
         st.session_state["consulta_resultado"] = (treatment, result, perf_counter() - start)
+        output = config.results_dir / ("humo/consultas" if demo else "consultas") / f"consulta_{sello()}.json"
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps({"pregunta": pregunta, "tratamiento": treatment, **result.como_dict()}, ensure_ascii=False, indent=2), encoding="utf-8")
+        st.session_state["consulta_salida"] = str(output)
         if treatment == "C" and result.sostenida_por_fragmento:
             st.session_state["consulta_verificada"] = True
     if previous := st.session_state.get("consulta_resultado"):
@@ -96,6 +103,8 @@ def mostrar_consulta(config, index, demo):
                     st.caption(f"[{fragment.documento}, p. {fragment.pagina}] · similitud {fragment.similitud:.3f}")
                     st.text(fragment.texto)
         st.caption(f"Consulta completada en {elapsed:.3f} s.")
+        if st.session_state.get("consulta_salida"):
+            st.caption(f"Respuesta guardada en: {st.session_state['consulta_salida']}")
 
 
 try:
@@ -117,6 +126,8 @@ try:
     st.title(f"{PASOS.index(paso) + 1}. {paso}")
     st.caption(DESCRIPCIONES[PASOS.index(paso)])
     st.progress(PASOS.index(paso) / (len(PASOS) - 1), text=f"Paso {PASOS.index(paso) + 1} de {len(PASOS)}")
+    config, salida_lista = elegir_salida(config, demo)
+    estado = estado_proyecto(config, index, demo)
     if demo:
         st.warning("Demostración con documentos sintéticos, embeddings falsos y cliente falso. No mide calidad real.")
     if config.allow_counterpart_cloud:
@@ -131,7 +142,8 @@ try:
     }
     function, args = pantallas[paso]
     try:
-        function(*args)
+        if salida_lista:
+            function(*args)
     except (ValueError, ErrorLLM) as error:
         st.error(str(error))
     except OSError:
@@ -143,6 +155,8 @@ try:
         allowed, reason = False, "Importa al menos un documento de Edward/C para continuar."
     if paso == "Preparar" and not estado["indice_listo"]:
         allowed, reason = False, "Prepara los documentos para habilitar las consultas."
+    if not salida_lista:
+        allowed, reason = False, "Confirma la carpeta de salida antes de continuar."
     botones_paso(paso, puede_continuar=allowed, motivo=reason)
     st.caption(f"Preparación de interfaz e índice: {perf_counter() - INICIO:.3f} s. El modelo local se carga al consultar.")
 except (ValueError, ErrorLLM) as error:

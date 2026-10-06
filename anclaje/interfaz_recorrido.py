@@ -156,6 +156,7 @@ def mostrar_evaluacion(config, index, estado, demo):
         with st.spinner("Evaluando las preguntas y guardando los resultados…"):
             output, metrics = evaluar(path, run_config, index, client, origen=origin)
         st.session_state["evaluacion_resultado"] = (output, metrics, fake)
+        st.success(f"Resultados y métricas guardados en: {config.results_dir}")
     if result := st.session_state.get("evaluacion_resultado"):
         output, metrics, synthetic = result
         if synthetic:

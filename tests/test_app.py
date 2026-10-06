@@ -18,6 +18,7 @@ def test_app_demo_consulta_y_privacidad(tmp_path, monkeypatch):
     monkeypatch.setenv("ANCLAJE_CONFIG", str(config))
     monkeypatch.setenv("ANCLAJE_DEMO", "true")
     app = AppTest.from_file(str(root / "app.py"), default_timeout=30).run()
+    app.button(key="confirmar_salida").click().run()
     assert not app.exception
     assert any("Demostración" in item.value for item in app.warning)
     ir_a(app, "Consultar")
@@ -50,6 +51,7 @@ def app_real_falsa(tmp_path, monkeypatch):
     monkeypatch.setenv("ANCLAJE_CONFIG", str(config))
     monkeypatch.setenv("ANCLAJE_DEMO", "false")
     app = AppTest.from_file(str(root / "app.py"), default_timeout=30).run()
+    app.button(key="confirmar_salida").click().run()
     return ir_a(app, "Fuentes"), client
 
 
@@ -197,7 +199,7 @@ def test_evaluacion_desde_el_recorrido_sin_clave(tmp_path, monkeypatch):
     app.text_input(key="banco_documento").set_value("publicos/edward/media.txt")
     app.button(key="agregar_pregunta").click().run()
     assert not app.exception and not app.error
-    assert (tmp_path / "eval/banco.csv").exists()
+    assert (tmp_path / "resultados/banco.csv").exists()
     assert app.metric[0].value == "1"
     assert app.button(key="ejecutar_evaluacion").disabled
     app.checkbox(key="evaluacion_falsa").check().run()

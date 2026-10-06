@@ -265,3 +265,21 @@ con cinco avisos SWIG existentes. Incluye persistencia entre sesiones, ejecució
 de lotes en la interfaz, comparación inválida o fallida, CSV con delimitadores
 y saltos de línea, protección de fórmulas y paginación del informe. No se midió
 calidad semántica real ni se realizó una inspección visual en navegador.
+
+## Elección del destino antes de procesar
+
+La app pide confirmar una carpeta de salida antes de habilitar los pasos. Tiene
+selector nativo y ruta escrita, comprobación de escritura y preferencia local
+persistente; el destino se muestra siempre. Los resultados nuevos usan esa
+carpeta: consultas JSON, CSV de lotes, banco, evaluación/métricas, memoria y
+evidencias A/B. Las fuentes C y el índice se mantienen en el proyecto.
+
+Los CSV de lotes se guardan automáticamente después de cada respuesta, sin
+depender de una descarga. Cambiar la carpeta no mueve los archivos anteriores;
+la memoria y los resultados en pantalla se separan por destino. Las descargas
+del navegador usan sus preferencias propias. El CLI mantiene las rutas de su
+configuración y no incorpora el selector de la app.
+
+Validación: la suite completa pasó **102 pruebas** en 11,59 s sin red ni clave,
+con los cinco avisos SWIG existentes. Se probaron elección obligatoria, carpetas
+externas, persistencia de la preferencia y guardado en el destino seleccionado.

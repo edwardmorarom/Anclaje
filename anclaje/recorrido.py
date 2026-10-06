@@ -14,7 +14,7 @@ DESCRIPCIONES = (
 
 
 def ruta_banco(config, demo=False):
-    return config.results_dir / "humo" / "banco.csv" if demo else config.root / "eval" / "banco.csv"
+    return config.results_dir / "humo" / "banco.csv" if demo else config.results_dir / "banco.csv"
 
 
 def estado_proyecto(config, indice, demo=False) -> dict:

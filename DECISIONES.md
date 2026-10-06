@@ -32,4 +32,7 @@
 - El informe base se conserva separado del corpus y sus ubicaciones se buscan localmente, con vectores reutilizados dentro del lote. Las sugerencias no se etiquetan como páginas confirmadas.
 - La memoria operativa usa JSON versionado y escritura temporal seguida de reemplazo; se guarda tras cada consulta. La memoria académica conserva JSON y Markdown independientes.
 - El CSV del lote usa punto y coma y UTF-8 con BOM; neutraliza fórmulas al abrir textos en Excel. Los fallos por fila quedan registrados sin perder respuestas anteriores.
+- La app exige confirmar un destino antes de procesar; recuerda la carpeta, comprueba escritura y muestra el destino. Se cambia results_dir solo para esa ejecución de la app, sin modificar config.yaml ni mover archivos anteriores.
+- Los CSV de lotes se escriben automáticamente tras cada respuesta. Los bancos creados en la app también siguen el destino, mientras que el CLI conserva sus rutas explícitas.
+- Dentro del repositorio los resultados se limitan al directorio excluido de Git; se permiten carpetas externas. La configuración de descargas del navegador es independiente de las copias automáticas.
 - Se desactiva thinking en la llamada a DeepSeek para respetar temperatura 0 y el presupuesto de salida; la documentación actual indica que thinking está activo por defecto y que ignora temperature (https://api-docs.deepseek.com/guides/thinking_mode/).

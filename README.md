@@ -76,6 +76,25 @@ ya presentes en caché: no descargan modelos ni usan una API de embeddings.
 La app tiene un recorrido con **Anterior**, **Continuar** y acceso a cada paso
 desde el menú lateral. Conserva los borradores al cambiar de pantalla.
 
+Antes de comenzar, abre **Dónde guardar los resultados**, pulsa **Elegir carpeta
+de salida** (o escribe una ruta completa) y **Confirmar carpeta de salida**.
+Sin confirmar no se habilitan los procesos. La app recuerda la elección y muestra
+el destino en cada paso; puedes cambiarlo antes de otra ejecución.
+
+En esa carpeta se guardan los CSV del lote, consultas individuales JSON, bancos
+de preguntas, evaluaciones, métricas, memorias y evidencias A/B. El lote genera
+su CSV automáticamente, además de ofrecer descarga. Cambiar el destino no mueve
+archivos anteriores ni mezcla las memorias de las dos carpetas. Las fuentes C
+y el índice siguen siendo datos de trabajo locales del proyecto.
+
+La preferencia se conserva en `resultados/destino.json` (en demo,
+`resultados/humo/destino.json`), fuera de Git. Dentro del repositorio se permite
+guardar resultados bajo `resultados/`; también puedes elegir una carpeta fuera
+del repositorio. Las descargas hechas con los botones del navegador siguen su
+configuración de descargas; la copia automática queda en la carpeta elegida.
+Esta selección corresponde a la app: el CLI conserva las rutas de config.yaml
+y los bancos explícitos indicados en sus comandos.
+
 | Paso | Qué haces |
 | --- | --- |
 | 1. Inicio | Compruebas documentos, índice, clave y banco. Puedes probar la API con una pregunta sintética. |
@@ -114,7 +133,7 @@ por integrante organiza el trabajo: para comparar tratamientos deben repetir
 la misma pregunta en A, B y C.
 
 El paso **Evaluar** permite agregar preguntas conocidas y guardarlas en
-`eval/banco.csv`, o importar un CSV existente validando su formato antes de
+`banco.csv` dentro del destino elegido, o importar un CSV existente validando su formato antes de
 reemplazarlo. Muestra la cantidad de preguntas y las que están fuera del corpus.
 Puedes probar el circuito con cliente falso o ejecutar A/C con la API real.
 En demo el banco se guarda por separado bajo `resultados/humo/`.
@@ -124,7 +143,7 @@ Diagnóstico; Experimento y decisión; El sistema; Evaluación; Qué corrigieron
 su propio anteproyecto; Declaración de uso de IA. Permite editar, guardar el
 borrador local y descargar Markdown. No completa resultados ni afirmaciones:
 debes aportar tus evidencias y verificar la extensión final de 2 a 4 páginas.
-Los borradores se guardan en `resultados/memoria/`, fuera de Git.
+Los borradores se guardan bajo `memoria/` dentro del destino elegido.
 
 El diagnóstico actualizado y los pendientes están en [PENDIENTES.md](PENDIENTES.md).
 
@@ -157,12 +176,12 @@ respuesta obtenida, coincidencia y explicación, fuente/página, ubicaciones
 sugeridas del informe y página confirmada. Usa UTF-8 con BOM para Excel, conserva
 acentos y protege textos que podrían interpretarse como fórmulas.
 
-La memoria operativa se guarda en `resultados/agente/memoria.json`, con versión,
+La memoria operativa se guarda en `agente/memoria.json` dentro del destino elegido, con versión,
 fecha de actualización, preguntas, último lote y referencia al informe. Se carga
 al abrir la pantalla en una sesión nueva; no contiene claves, permanece fuera
 de Git y no modifica el protocolo ni entrena el modelo. Es persistencia de trabajo,
 distinta de la memoria académica de seis apartados. En demo usa
-`resultados/humo/agente/` y no evalúa equivalencia semántica real.
+`humo/agente/` dentro del destino y no evalúa equivalencia semántica real.
 
 ```text
 python -m anclaje reindexar
