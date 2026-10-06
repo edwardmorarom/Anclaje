@@ -37,3 +37,14 @@ def mostrar_portada():
     <p>Un espacio para organizar fuentes, comprobar afirmaciones y construir la evidencia de tu investigación. Empieza con tus documentos y avanza a tu ritmo.</p>
     <div class="portada-etapas"><span>01 / Organiza tus fuentes</span><span>02 / Consulta y contrasta</span><span>03 / Documenta la evidencia</span></div>
     </div>''', unsafe_allow_html=True)
+
+
+def destacar_accion(key):
+    # Los identificadores proceden exclusivamente del mapa de acciones de la app.
+    st.markdown(f'''<style>
+    .st-key-{key} button:not(:disabled) {{
+        border:2px solid #92713d;
+        box-shadow:0 0 0 4px #92713d20;
+        font-weight:650;
+    }}
+    </style>''', unsafe_allow_html=True)

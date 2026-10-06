@@ -1,6 +1,6 @@
 from dataclasses import asdict, replace
 
-import streamlit as st
+from .operaciones import controles as st
 
 from .biblioteca import actualizar_indice
 from .diseno import mostrar_portada
@@ -8,6 +8,8 @@ from .evaluar import evaluar, leer_banco
 from .llm import ClienteDeepSeek, ClienteFalso
 from .recorrido import PASOS, agregar_pregunta, importar_banco, resumen_banco, ruta_banco
 from .responder import control
+from .operaciones import ocupado, programar
+from .flujo import marcar_avance, invalidar_avance
 
 CAMPOS = {
     "espacio_consulta", "lote_tratamiento", "lote_origen",
@@ -33,8 +35,21 @@ def restaurar_campos():
 
 
 def ir_a(paso):
+    if ocupado():
+        return
+    if not st.session_state.get("pasos_habilitados", {}).get(paso, True):
+        st.session_state["aviso_navegacion"] = st.session_state.get("motivos_pasos", {}).get(paso, "Completa el paso anterior.")
+        return
     conservar_campos()
     st.session_state["paso_activo"] = paso
+
+
+def seleccionar_paso():
+    target = st.session_state["paso_activo"]
+    if ocupado() or not st.session_state.get("pasos_habilitados", {}).get(target, True):
+        st.session_state["paso_activo"] = st.session_state.get("ultimo_paso_valido", "Inicio")
+        st.session_state["aviso_navegacion"] = st.session_state.get("motivos_pasos", {}).get(target, "Espera a que termine el proceso.")
+    conservar_campos()
 
 
 def botones_paso(paso, *, puede_continuar=True, motivo=""):
@@ -42,14 +57,17 @@ def botones_paso(paso, *, puede_continuar=True, motivo=""):
     st.divider()
     left, right = st.columns(2)
     if position:
-        left.button("← Anterior", key="paso_anterior", on_click=ir_a, args=(PASOS[position - 1],), width="stretch")
+        with left:
+            st.button("← Anterior", key="paso_anterior", on_click=ir_a, args=(PASOS[position - 1],), width="stretch")
     if position < len(PASOS) - 1:
-        right.button(f"Continuar a {PASOS[position + 1].lower()} →", key="paso_siguiente", type="primary",
-                     on_click=ir_a, args=(PASOS[position + 1],), disabled=not puede_continuar, width="stretch")
+        with right:
+            st.button(f"Continuar a {PASOS[position + 1].lower()} →", key="paso_siguiente", type="primary",
+                      on_click=ir_a, args=(PASOS[position + 1],), disabled=not puede_continuar, width="stretch")
         if not puede_continuar and motivo:
             st.info(motivo)
     else:
-        right.button("Revisar estado del proyecto", on_click=ir_a, args=("Inicio",), width="stretch")
+        with right:
+            st.button("Revisar estado del proyecto", on_click=ir_a, args=("Inicio",), width="stretch")
 
 
 def mostrar_inicio(config, estado, demo):
@@ -71,9 +89,10 @@ def mostrar_inicio(config, estado, demo):
     else:
         st.caption(f"Modelo configurado: {config.llm_model}. Tener una clave configurada no confirma saldo, permisos ni conexión.")
         if st.button("Probar conexión con DeepSeek", key="probar_api", disabled=not estado["clave_configurada"]):
-            with st.spinner("Probando una consulta breve sin documentos…"):
+            def probar():
                 control("Prueba de conexión: responde brevemente que el servicio está disponible.", ClienteDeepSeek(config))
-            st.session_state["api_comprobada"] = True
+                st.session_state["api_comprobada"] = True
+            programar("Probando una consulta breve sin documentos…", probar)
         if st.session_state.get("api_comprobada"):
             st.success("La API respondió correctamente a la prueba de esta sesión.")
         st.caption("La prueba envía una pregunta sintética al proveedor. No envía tus documentos.")
@@ -92,10 +111,11 @@ def mostrar_preparacion(config, index, estado, demo):
         st.info("Primero importa los documentos de Edward/C en el paso Fuentes.")
         st.button("Ir a incorporar fuentes", key="volver_fuentes", on_click=ir_a, args=("Fuentes",))
     if st.button("Preparar documentos", key="actualizar_indice", type="primary", disabled=not estado["documentos"]):
-        with st.spinner("Preparando el índice local. La primera vez puede tardar varios minutos…"):
+        def preparar():
             summary = actualizar_indice(config, index)
-        st.session_state["indice_pendiente"] = False
-        st.session_state["preparacion_resultado"] = summary
+            st.session_state["indice_pendiente"] = False
+            st.session_state["preparacion_resultado"] = summary
+        programar("Preparando el índice local. La primera vez puede tardar varios minutos…", preparar)
     if summary := st.session_state.get("preparacion_resultado"):
         st.success(f"Preparación completada: {summary['documentos']} documentos, {summary['paginas']} páginas y {summary['fragmentos']} fragmentos.")
         for notice in summary["avisos"]:
@@ -153,10 +173,13 @@ def mostrar_evaluacion(config, index, estado, demo):
     if st.button("Ejecutar evaluación A y C", key="ejecutar_evaluacion", disabled=not ready, type="primary"):
         run_config = replace(config, llm_model="cliente-falso") if fake else config
         client = ClienteFalso() if fake else ClienteDeepSeek(config)
-        with st.spinner("Evaluando las preguntas y guardando los resultados…"):
+        def medir():
+            invalidar_avance(config, "evaluacion", demo)
             output, metrics = evaluar(path, run_config, index, client, origen=origin)
-        st.session_state["evaluacion_resultado"] = (output, metrics, fake)
-        st.success(f"Resultados y métricas guardados en: {config.results_dir}")
+            st.session_state["evaluacion_resultado"] = (output, metrics, fake)
+            if not any(row["errores"] for row in metrics):
+                marcar_avance(config, "evaluacion", demo)
+        programar("Evaluando las preguntas y guardando los resultados…", medir)
     if result := st.session_state.get("evaluacion_resultado"):
         output, metrics, synthetic = result
         if synthetic:

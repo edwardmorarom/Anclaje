@@ -52,6 +52,7 @@ def test_interfaz_pide_destino_antes_de_procesar_y_lo_recuerda(tmp_path, monkeyp
     app.text_input(key="ruta_salida").set_value(str(chosen))
     app.button(key="confirmar_salida").click().run()
     assert not app.exception and not app.error
+    app.radio(key="paso_activo").set_value("Consultar").run()
     app.text_input(key="pregunta_consulta").set_value("media aritmética suma valores número observaciones")
     app.button(key="consultar").click().run()
     assert not app.exception and not app.error
@@ -60,10 +61,6 @@ def test_interfaz_pide_destino_antes_de_procesar_y_lo_recuerda(tmp_path, monkeyp
     fresh = AppTest.from_file(str(root / "app.py"), default_timeout=30).run()
     assert fresh.text_input(key="ruta_salida").value == str(chosen)
     assert not fresh.button(key="paso_siguiente").disabled
-    fresh.radio(key="paso_activo").set_value("Memoria").run()
-    fresh.text_area(key="memoria_diagnostico").set_value("Borrador en salida seleccionada")
-    fresh.button(key="guardar_memoria").click().run()
-    assert (chosen / "memoria/borrador.md").is_file()
     fresh.radio(key="paso_activo").set_value("Evaluar").run()
     fresh.text_input(key="banco_pregunta").set_value("media aritmética suma valores número observaciones")
     fresh.text_area(key="banco_respuesta").set_value("Suma dividida entre n")
@@ -73,10 +70,14 @@ def test_interfaz_pide_destino_antes_de_procesar_y_lo_recuerda(tmp_path, monkeyp
     fresh.button(key="ejecutar_evaluacion").click().run()
     assert not fresh.exception and not fresh.error
     assert list(chosen.glob("evaluacion_*.csv")) and list(chosen.glob("metricas_*.csv"))
+    fresh.radio(key="paso_activo").set_value("Memoria").run()
+    fresh.text_area(key="memoria_diagnostico").set_value("Borrador en salida seleccionada")
+    fresh.button(key="guardar_memoria").click().run()
+    assert (chosen / "memoria/borrador.md").is_file()
     other = tmp_path / "otra_salida"
     fresh.text_input(key="ruta_salida").set_value(str(other))
     fresh.button(key="confirmar_salida").click().run()
     fresh.radio(key="paso_activo").set_value("Memoria").run()
-    assert fresh.text_area(key="memoria_diagnostico").value == ""
+    assert fresh.radio(key="paso_activo").value != "Memoria"
     assert (chosen / "memoria/borrador.md").is_file()
     assert not (other / "memoria/borrador.md").exists()

@@ -283,3 +283,27 @@ configuración y no incorpora el selector de la app.
 Validación: la suite completa pasó **102 pruebas** en 11,59 s sin red ni clave,
 con los cinco avisos SWIG existentes. Se probaron elección obligatoria, carpetas
 externas, persistencia de la preferencia y guardado en el destino seleccionado.
+
+## Validación de pasos y bloqueo durante operaciones
+
+El recorrido exige requisitos también al navegar desde el menú lateral. Cada
+paso muestra check, flecha disponible o candado. Se añade guía de acción y borde
+dorado al siguiente botón útil. La selección mezclada de responsables bloquea
+la importación antes de copiar archivos.
+
+Preparación, importación, consulta y evaluación se ejecutan después de volver
+a dibujar la interfaz con botones, campos, descargas y navegación deshabilitados.
+Se rechazan operaciones duplicadas en la sesión y los controles se liberan
+tanto al terminar como ante errores. Se conservan los indicadores de actividad.
+
+El avance se guarda en recorrido.json dentro de la salida seleccionada, separado
+en demo. Se vincula al corpus, parámetros y protocolo; la evaluación también
+se vincula al banco. Las salidas inválidas o las evaluaciones con errores no
+completan el paso. El check de memoria requiere los seis apartados guardados.
+El ensayo con un banco pequeño permite probar el recorrido, pero no reemplaza
+las 15–20 preguntas y tres fuera del corpus exigidas para la entrega.
+
+Validación final: **107 pruebas pasan sin red ni clave** en 48,48 s, con los cinco
+avisos SWIG existentes. Incluye bloqueo nativo de controles, rechazo de saltos,
+recuperación tras errores, persistencia e invalidación del avance. No se hicieron
+llamadas reales a DeepSeek ni descargas de pesos para estas pruebas.

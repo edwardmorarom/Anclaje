@@ -7,22 +7,24 @@ import sys
 import json
 from pathlib import Path
 
-import streamlit as st
+from anclaje.operaciones import controles as st
 
 from anclaje.cli import preparar_humo
 from anclaje.config import cargar_config
 from anclaje.embeddings import EmbeddingsLocales
-from anclaje.diseno import aplicar_diseno
+from anclaje.diseno import aplicar_diseno, destacar_accion
 from anclaje.interfaz_lotes import mostrar_lotes
 from anclaje.indice import Indice
 from anclaje.interfaz_fuentes import mostrar_fuentes, mostrar_memoria
-from anclaje.interfaz_recorrido import botones_paso, conservar_campos, mostrar_evaluacion, mostrar_inicio, mostrar_preparacion, restaurar_campos
+from anclaje.interfaz_recorrido import botones_paso, seleccionar_paso, conservar_campos, mostrar_evaluacion, mostrar_inicio, mostrar_preparacion, restaurar_campos
 from anclaje.llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
 from anclaje.memoria import TRATAMIENTOS
 from anclaje.recorrido import DESCRIPCIONES, PASOS, estado_proyecto
 from anclaje.responder import control, responder
 from anclaje.salida import elegir_salida
 from anclaje.evaluar import sello
+from anclaje.operaciones import ocupado, programar, ejecutar_pendiente
+from anclaje.flujo import estado_flujo, primer_pendiente, marcar_avance, invalidar_avance
 
 st.set_page_config(page_title="Anclaje · Nada sin fuente", page_icon="⚓", layout="wide")
 aplicar_diseno()
@@ -72,17 +74,22 @@ def mostrar_consulta(config, index, demo):
             raise ValueError("La pregunta no puede estar vacía.")
         if treatment == "C" and pending:
             raise ValueError("Actualiza el índice antes de consultar las nuevas fuentes.")
-        with st.spinner("Preparando la respuesta…"):
+        def consultar():
+            if treatment == "C":
+                invalidar_avance(config, "consulta", demo)
             start = perf_counter()
             client = ClienteFalso() if demo else ClienteDeepSeek(config)
             result = responder(pregunta, config, index, client, origen=origin) if treatment == "C" else control(pregunta, client)
-        st.session_state["consulta_resultado"] = (treatment, result, perf_counter() - start)
-        output = config.results_dir / ("humo/consultas" if demo else "consultas") / f"consulta_{sello()}.json"
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps({"pregunta": pregunta, "tratamiento": treatment, **result.como_dict()}, ensure_ascii=False, indent=2), encoding="utf-8")
-        st.session_state["consulta_salida"] = str(output)
-        if treatment == "C" and result.sostenida_por_fragmento:
-            st.session_state["consulta_verificada"] = True
+            st.session_state["consulta_resultado"] = (treatment, result, perf_counter() - start)
+            output = config.results_dir / ("humo/consultas" if demo else "consultas") / f"consulta_{sello()}.json"
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps({"pregunta": pregunta, "tratamiento": treatment, **result.como_dict()}, ensure_ascii=False, indent=2), encoding="utf-8")
+            st.session_state["consulta_salida"] = str(output)
+            if treatment == "C" and result.sostenida_por_fragmento:
+                st.session_state["consulta_verificada"] = True
+            if treatment == "C" and result.motivo not in {"salida_json_invalida", "sin_citas_verificadas"}:
+                marcar_avance(config, "consulta", demo)
+        programar("Preparando la respuesta…", consultar)
     if previous := st.session_state.get("consulta_resultado"):
         result_treatment, result, elapsed = previous
         if result_treatment != treatment:
@@ -113,21 +120,58 @@ try:
     firma = max(archivo.stat().st_mtime_ns, (archivo.parent / ".env").stat().st_mtime_ns if (archivo.parent / ".env").exists() else 0)
     config, index = recursos(str(archivo), firma, demo)
     restaurar_campos()
+    config, salida_lista = elegir_salida(config, demo)
     estado = estado_proyecto(config, index, demo)
+    flujo = estado_flujo(config, estado, salida_lista, demo)
+    st.session_state["pasos_habilitados"] = flujo["habilitados"]
+    st.session_state["motivos_pasos"] = flujo["motivos"]
+    actual = st.session_state.get("paso_activo", "Inicio")
+    if not flujo["habilitados"].get(actual, False):
+        actual = primer_pendiente(flujo)
+    # Los checks cambian las etiquetas del radio; conserva su selección explícita.
+    st.session_state["paso_activo"] = actual
     st.sidebar.title("Anclaje")
-    paso = st.sidebar.radio("Tu recorrido", PASOS, key="paso_activo", on_change=conservar_campos,
-                            format_func=lambda value: f"{PASOS.index(value) + 1}. {value}")
-    st.sidebar.caption("Avanza con Continuar. Puedes volver a cualquier paso desde aquí.")
+    def etiqueta(value):
+        icon = "✓" if flujo["completados"][value] else "→" if flujo["habilitados"][value] else "🔒"
+        return f"{icon} {PASOS.index(value) + 1}. {value}"
+    paso = st.sidebar.radio("Tu recorrido", PASOS, key="paso_activo", on_change=seleccionar_paso,
+                            format_func=etiqueta, disabled=ocupado())
+    st.session_state["ultimo_paso_valido"] = paso
+    st.sidebar.caption("✓ Completado · → Disponible · 🔒 Requisito pendiente")
+    st.sidebar.caption("Puedes volver atrás. Los pasos pendientes se habilitan al completar sus requisitos.")
     st.sidebar.divider()
     st.sidebar.write("Estado del proyecto")
     st.sidebar.caption(f"Documentos C: {len(estado['documentos'])}")
-    st.sidebar.caption("Índice: listo" if estado["indice_listo"] else "Índice: por preparar")
-    st.sidebar.caption("Clave: configurada" if estado["clave_configurada"] else "Clave: pendiente")
+    st.sidebar.caption("✓ Índice listo" if estado["indice_listo"] else "○ Índice por preparar")
+    st.sidebar.caption("✓ Clave configurada" if estado["clave_configurada"] else "○ Clave pendiente")
     st.title(f"{PASOS.index(paso) + 1}. {paso}")
     st.caption(DESCRIPCIONES[PASOS.index(paso)])
-    st.progress(PASOS.index(paso) / (len(PASOS) - 1), text=f"Paso {PASOS.index(paso) + 1} de {len(PASOS)}")
-    config, salida_lista = elegir_salida(config, demo)
-    estado = estado_proyecto(config, index, demo)
+    completed = sum(flujo["completados"].values())
+    st.progress(completed / len(PASOS), text=f"{completed} de {len(PASOS)} pasos con requisitos completados")
+    if aviso := st.session_state.pop("aviso_navegacion", None):
+        st.warning(aviso)
+    if aviso := st.session_state.pop("aviso_operacion", None):
+        getattr(st, aviso[0])(aviso[1])
+    if ocupado():
+        st.info("⏳ Proceso en curso. Los botones y campos están bloqueados hasta terminar.")
+    guias = {
+        "Inicio": "→ Confirma arriba la carpeta de salida. Después pulsa Continuar a fuentes.",
+        "Fuentes": "→ Elige una carpeta, pulsa Revisar carpeta y después Importar selección para C · Edward.",
+        "Preparar": "→ Pulsa Preparar documentos. Al terminar, continúa a Consultar.",
+        "Consultar": "→ Escribe una pregunta y pulsa Consultar, o ejecuta la Tabla de preguntas con C. Luego revisa el resultado.",
+        "Evaluar": "→ Guarda o importa preguntas y pulsa Ejecutar evaluación A y C. Corrige los errores antes de continuar.",
+        "Memoria": "→ Completa los seis apartados y pulsa Guardar borrador. El check aparece cuando todos tienen contenido.",
+    }
+    st.info(guias[paso])
+    acciones = {"Inicio": "confirmar_salida", "Fuentes": "revisar_carpeta", "Preparar": "actualizar_indice",
+                "Consultar": "analizar_lote" if st.session_state.get("espacio_consulta") == "Tabla de preguntas" else "consultar",
+                "Evaluar": "ejecutar_evaluacion" if estado["banco_existe"] else "agregar_pregunta", "Memoria": "guardar_memoria"}
+    if paso == "Fuentes" and st.session_state.get("vista_fuentes"):
+        acciones[paso] = "importar_carpeta"
+    if paso == "Fuentes" and st.session_state.get("metodo_importacion") == "Archivos desde el navegador":
+        acciones[paso] = "importar_archivos"
+    destacar_accion("paso_siguiente" if flujo["completados"][paso] and paso != "Memoria" else acciones[paso])
+    st.caption("El borde dorado señala la siguiente acción. Los checks indican avance del recorrido; la evidencia académica requiere revisión.")
     if demo:
         st.warning("Demostración con documentos sintéticos, embeddings falsos y cliente falso. No mide calidad real.")
     if config.allow_counterpart_cloud:
@@ -150,14 +194,12 @@ try:
         st.error("No se pudo acceder a la carpeta o al archivo. Revisa la ruta y los permisos.")
     conservar_campos()
     estado = estado_proyecto(config, index, demo)
-    allowed, reason = True, ""
-    if paso == "Fuentes" and not estado["documentos"] and not demo:
-        allowed, reason = False, "Importa al menos un documento de Edward/C para continuar."
-    if paso == "Preparar" and not estado["indice_listo"]:
-        allowed, reason = False, "Prepara los documentos para habilitar las consultas."
-    if not salida_lista:
-        allowed, reason = False, "Confirma la carpeta de salida antes de continuar."
-    botones_paso(paso, puede_continuar=allowed, motivo=reason)
+    flujo = estado_flujo(config, estado, salida_lista, demo)
+    st.session_state["pasos_habilitados"] = flujo["habilitados"]
+    st.session_state["motivos_pasos"] = flujo["motivos"]
+    siguiente = PASOS[min(PASOS.index(paso) + 1, len(PASOS) - 1)]
+    botones_paso(paso, puede_continuar=flujo["habilitados"][siguiente], motivo=flujo["motivos"][siguiente])
+    ejecutar_pendiente()
     st.caption(f"Preparación de interfaz e índice: {perf_counter() - INICIO:.3f} s. El modelo local se carga al consultar.")
 except (ValueError, ErrorLLM) as error:
     st.error(str(error))

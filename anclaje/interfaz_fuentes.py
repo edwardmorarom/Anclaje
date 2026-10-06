@@ -1,6 +1,8 @@
 from pathlib import Path
 
-import streamlit as st
+from .operaciones import programar
+
+from .operaciones import controles as st
 
 from .biblioteca import explorar_carpeta, importar_archivos, importar_carpeta, seleccionar_carpeta
 from .memoria import APARTADOS, TRATAMIENTOS, cargar_memoria, destino_tratamiento, exportar_memoria, guardar_memoria, reconocer_tratamiento
@@ -46,9 +48,12 @@ def mostrar_fuentes(config, index, demo):
         folder = st.text_input("Ruta de la carpeta", key="carpeta_fuentes", placeholder="C:\\Users\\edwar\\Desktop\\II\\edward")
         recursive = st.checkbox("Incluir subcarpetas", key="subcarpetas_fuentes")
         st.caption("PDF, TXT, MD y DOCX. Se omiten temporales de Word (~$...), archivos ocultos y CSV/XLSX. El selector nativo se abre en el computador donde ejecutas la app.")
-        if st.button("Revisar carpeta", key="revisar_carpeta", disabled=demo):
-            candidates = explorar_carpeta(folder, recursive)
-            st.session_state["vista_fuentes"] = (folder, recursive, candidates)
+        st.caption("① Elige la carpeta. ② Pulsa Revisar carpeta. ③ Revisa la selección y pulsa Importar selección.")
+        if st.button("Revisar carpeta", key="revisar_carpeta", disabled=demo or not folder.strip()):
+            def revisar():
+                candidates = explorar_carpeta(folder, recursive)
+                st.session_state["vista_fuentes"] = (folder, recursive, candidates)
+            programar("Revisando los documentos de la carpeta...", revisar)
         preview = st.session_state.get("vista_fuentes")
         if preview and preview[:2] == (folder, recursive):
             candidates = preview[2]
@@ -72,14 +77,18 @@ def mostrar_fuentes(config, index, demo):
                 group_key = f"grupo_fuentes:{folder}"
                 group = st.text_input("Nombre del grupo", value="" if group_key in st.session_state else Path(folder).name, key=group_key)
                 st.caption("C se incorpora al corpus del anclaje. A y B se guardan como evidencias locales del experimento.")
-                if st.button("Importar selección", key="importar_carpeta", disabled=demo or not selected):
-                    mismatches = [name for name in selected if reconocer_tratamiento(folder, name) not in (None, treatment)]
-                    if mismatches:
-                        st.error("La selección mezcla responsables de otros tratamientos. Ajusta el tratamiento o desmarca esos documentos.")
-                    else:
-                        results = importar_carpeta(folder, destino_tratamiento(config, treatment), origin, selected,
-                                                   grupo=group, incluir_subcarpetas=recursive, permiso=permission, verificado_por=verifier)
-                        _importados(results, config, treatment)
+                mismatches = [name for name in selected if reconocer_tratamiento(folder, name) not in (None, treatment)]
+                if mismatches:
+                    st.warning("La selección mezcla responsables de otros tratamientos. Ajusta el tratamiento o desmarca esos documentos.")
+                else:
+                    st.caption(f"✓ {len(selected)} documentos seleccionados para {treatment}. → Pulsa Importar selección.")
+                if st.button("Importar selección", key="importar_carpeta", type="primary", disabled=demo or not selected or bool(mismatches) or not group.strip()):
+                    if not mismatches:
+                        def importar():
+                            results = importar_carpeta(folder, destino_tratamiento(config, treatment), origin, selected,
+                                                       grupo=group, incluir_subcarpetas=recursive, permiso=permission, verificado_por=verifier)
+                            _importados(results, config, treatment)
+                        programar("Importando los documentos seleccionados...", importar)
     else:
         treatment = st.selectbox("Guardar documentos para el tratamiento", list(TRATAMIENTOS), index=0 if "tratamiento_archivos" in st.session_state else 2,
                                  key="tratamiento_archivos", format_func=lambda code: f"{code} · {TRATAMIENTOS[code][0]} · {TRATAMIENTOS[code][1]}")
@@ -87,10 +96,12 @@ def mostrar_fuentes(config, index, demo):
         group = st.text_input("Nombre del grupo", value="" if group_key in st.session_state else TRATAMIENTOS[treatment][0], key=group_key)
         uploaded = st.file_uploader("Seleccionar documentos", type=["pdf", "txt", "md", "docx"],
                                     accept_multiple_files=True, key="archivos_fuentes", disabled=demo)
-        if st.button("Importar archivos", key="importar_archivos", disabled=demo or not uploaded):
-            results = importar_archivos(uploaded, destino_tratamiento(config, treatment), origin,
-                                        grupo=group, permiso=permission, verificado_por=verifier)
-            _importados(results, config, treatment)
+        if st.button("Importar archivos", key="importar_archivos", type="primary", disabled=demo or not uploaded or not group.strip()):
+            def importar_subidos():
+                results = importar_archivos(uploaded, destino_tratamiento(config, treatment), origin,
+                                            grupo=group, permiso=permission, verificado_por=verifier)
+                _importados(results, config, treatment)
+            programar("Importando los archivos seleccionados...", importar_subidos)
     if not demo and (st.session_state.get("indice_pendiente") or (config.docs_dir / ".indice_pendiente").exists()):
         st.info("Documentos incorporados. Continúa al paso Preparar para dejarlos listos para consultar.")
     library = [{"Documento": item.relativo, "Origen": origin}

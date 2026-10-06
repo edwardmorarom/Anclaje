@@ -119,13 +119,13 @@ def analizar_fila(fila, config, indice, cliente, *, tratamiento="C", origen="pub
             "paginas_informe_sugeridas": " | ".join(str(item["pagina"]) for item in candidates),
             "pagina_informe_confirmada": str(fila.get("Página informe confirmada", "") or ""),
             "ubicaciones_informe": candidates, "error_ubicacion": location_error,
-            "revision_manual": "", "error": ""}
+            "revision_manual": "", "motivo_respuesta": result.motivo, "error": ""}
 
 
 def exportar_csv(resultados):
     fields = ["pregunta", "respuesta_conocida", "respuesta", "coincidencia", "explicacion", "tratamiento", "origen", "modelo",
               "documento_fuente", "pagina_fuente", "cita_fuente", "informe_base", "paginas_informe_sugeridas",
-              "pagina_informe_confirmada", "revision_manual", "error_ubicacion", "error"]
+              "pagina_informe_confirmada", "revision_manual", "motivo_respuesta", "error_ubicacion", "error"]
     buffer = io.StringIO(newline="")
     writer = csv.DictWriter(buffer, fieldnames=fields, delimiter=";", extrasaction="ignore")
     writer.writeheader()

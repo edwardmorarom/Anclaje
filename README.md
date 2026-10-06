@@ -76,6 +76,30 @@ ya presentes en caché: no descargan modelos ni usan una API de embeddings.
 La app tiene un recorrido con **Anterior**, **Continuar** y acceso a cada paso
 desde el menú lateral. Conserva los borradores al cambiar de pantalla.
 
+Los pasos se validan también en el menú lateral: intentar saltar a uno bloqueado
+mantiene la pantalla actual y explica el requisito pendiente. **✓** indica un
+requisito completado, **→** un paso disponible y **🔒** un paso bloqueado.
+El borde dorado destaca la siguiente acción. Puedes volver a pasos anteriores.
+
+| Para avanzar desde | Requisito |
+| --- | --- |
+| Inicio | Carpeta de salida confirmada y escribible. |
+| Fuentes | Al menos un documento C incorporado (o fuentes sintéticas en demo). |
+| Preparar | Índice listo y sin importaciones pendientes. |
+| Consultar | Consulta C completada, individual o lote; una salida inválida no completa el paso. |
+| Evaluar | Evaluación ejecutada sin errores de consultas. Un banco pequeño sirve como ensayo; la entrega exige 15–20 preguntas y tres fuera del corpus. |
+| Memoria | El check requiere los seis apartados con contenido y guardados. |
+
+Durante importación, preparación, consulta y evaluación, los botones, campos,
+descargas y navegación se deshabilitan antes de comenzar el trabajo. Se muestra
+el proceso en curso y se liberan los controles al terminar o ante un error.
+Solo se admite una operación pendiente por sesión.
+
+El avance se conserva en `recorrido.json` dentro de la salida (en demo,
+`humo/recorrido.json`). Cambiar fuentes, parámetros o protocolo invalida las
+consultas y evaluaciones previas; cambiar el banco invalida la evaluación.
+Los checks acreditan el recorrido técnico y no sustituyen la revisión académica.
+
 Antes de comenzar, abre **Dónde guardar los resultados**, pulsa **Elegir carpeta
 de salida** (o escribe una ruta completa) y **Confirmar carpeta de salida**.
 Sin confirmar no se habilitan los procesos. La app recuerda la elección y muestra

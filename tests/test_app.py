@@ -11,6 +11,30 @@ def ir_a(app, paso):
     return app
 
 
+def preparar_consulta(app, tmp_path):
+    folder = tmp_path / "docs/publicos/edward"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "media.txt").write_text("media aritmética suma valores número observaciones", encoding="utf-8")
+    app.run()
+    ir_a(app, "Preparar")
+    app.button(key="actualizar_indice").click().run()
+    ir_a(app, "Consultar")
+
+
+def completar_hasta_memoria(app, tmp_path):
+    preparar_consulta(app, tmp_path)
+    app.text_input(key="pregunta_consulta").set_value("media aritmética suma valores número observaciones")
+    app.button(key="consultar").click().run()
+    ir_a(app, "Evaluar")
+    app.text_input(key="banco_pregunta").set_value("media aritmética suma valores número observaciones")
+    app.text_area(key="banco_respuesta").set_value("Suma entre n")
+    app.text_input(key="banco_documento").set_value("publicos/edward/media.txt")
+    app.button(key="agregar_pregunta").click().run()
+    app.checkbox(key="evaluacion_falsa").check().run()
+    app.button(key="ejecutar_evaluacion").click().run()
+    ir_a(app, "Memoria")
+
+
 def test_app_demo_consulta_y_privacidad(tmp_path, monkeypatch):
     root = Path(__file__).resolve().parents[1]
     config = tmp_path / "config.yaml"
@@ -72,13 +96,14 @@ def test_app_importa_carpeta_y_actualiza_desde_la_interfaz(tmp_path, monkeypatch
     assert not app.exception and not app.error
     assert (tmp_path / "docs/publicos/edward/media.txt").exists()
     ir_a(app, "Consultar")
-    assert app.button(key="consultar").disabled
+    assert app.radio(key="paso_activo").value != "Consultar"
+    assert not any(button.key == "consultar" for button in app.button)
     assert not client.llamadas
     assert (tmp_path / "docs/.indice_pendiente").exists()
     root = Path(__file__).resolve().parents[1]
     fresh = AppTest.from_file(str(root / "app.py"), default_timeout=30).run()
     ir_a(fresh, "Consultar")
-    assert fresh.button(key="consultar").disabled
+    assert fresh.radio(key="paso_activo").value != "Consultar"
     ir_a(app, "Preparar")
     app.button(key="actualizar_indice").click().run()
     assert not app.exception and not app.error
@@ -104,9 +129,9 @@ def test_app_reconoce_padre_con_tres_tratamientos_y_no_mezcla(tmp_path, monkeypa
     app.button(key="revisar_carpeta").click().run()
     assert not app.exception
     assert app.multiselect(key=f"seleccion_fuentes:{source}:True:C").value == ["edward/a.txt"]
-    app.multiselect(key=f"seleccion_fuentes:{source}:True:C").select("Harold/a.txt")
-    app.button(key="importar_carpeta").click().run()
-    assert any("mezcla" in item.value for item in app.error)
+    app.multiselect(key=f"seleccion_fuentes:{source}:True:C").select("Harold/a.txt").run()
+    assert app.button(key="importar_carpeta").disabled
+    assert any("mezcla" in item.value for item in app.warning)
     assert not (tmp_path / "docs/publicos/II/Harold/a.txt").exists()
     app.selectbox(key=f"tratamiento_importacion:{source}:True").select("A").run()
     assert app.multiselect(key=f"seleccion_fuentes:{source}:True:A").value == ["Harold/a.txt"]
@@ -118,7 +143,7 @@ def test_app_reconoce_padre_con_tres_tratamientos_y_no_mezcla(tmp_path, monkeypa
 
 def test_app_memoria_guarda_y_restaurar_seis_apartados(tmp_path, monkeypatch):
     app, _ = app_real_falsa(tmp_path, monkeypatch)
-    ir_a(app, "Memoria")
+    completar_hasta_memoria(app, tmp_path)
     assert len(app.text_area) == 6
     app.text_area(key="memoria_diagnostico").set_value("El DOI no abría; revisamos la referencia.")
     app.button(key="guardar_memoria").click().run()
@@ -133,7 +158,7 @@ def test_app_memoria_guarda_y_restaurar_seis_apartados(tmp_path, monkeypatch):
 
 def test_app_control_a_no_usa_indice_ni_fuentes(tmp_path, monkeypatch):
     app, client = app_real_falsa(tmp_path, monkeypatch)
-    ir_a(app, "Consultar")
+    preparar_consulta(app, tmp_path)
     app.selectbox(key="tratamiento_consulta").select("A").run()
     app.text_input(key="pregunta_consulta").set_value("Pregunta de control")
     app.button(key="consultar").click().run()
@@ -148,9 +173,11 @@ def test_carpeta_invalida_no_oculta_las_otras_pestanas(tmp_path, monkeypatch):
     app.button(key="revisar_carpeta").click().run()
     assert not app.exception and any("no existe" in item.value for item in app.error)
     ir_a(app, "Consultar")
-    assert app.text_input(key="pregunta_consulta")
+    assert app.radio(key="paso_activo").value == "Fuentes"
     ir_a(app, "Memoria")
-    assert len(app.text_area) == 6
+    assert app.radio(key="paso_activo").value == "Fuentes"
+    ir_a(app, "Inicio")
+    assert app.radio(key="paso_activo").value == "Inicio"
 
 
 def test_botones_guiados_y_borradores_se_conservan(tmp_path, monkeypatch):
@@ -162,7 +189,7 @@ def test_botones_guiados_y_borradores_se_conservan(tmp_path, monkeypatch):
     assert app.button(key="paso_siguiente").disabled
     app.text_input(key="carpeta_fuentes").set_value(str(tmp_path / "edward")).run()
     app.text_input(key="verificador_importacion").set_value("Edward").run()
-    ir_a(app, "Memoria")
+    completar_hasta_memoria(app, tmp_path)
     app.text_area(key="memoria_diagnostico").set_value("Mi borrador sin guardar.").run()
     ir_a(app, "Inicio")
     ir_a(app, "Memoria")

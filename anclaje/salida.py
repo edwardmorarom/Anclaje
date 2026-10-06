@@ -4,7 +4,7 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-import streamlit as st
+from .operaciones import controles as st
 
 from .biblioteca import seleccionar_carpeta
 

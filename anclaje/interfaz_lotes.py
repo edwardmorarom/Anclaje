@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-import streamlit as st
+from .operaciones import controles as st
 
 from .embeddings import EmbeddingsLocales, EmbedderFalso
 from .evaluar import sello
@@ -9,6 +9,8 @@ from .llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
 from .lotes import analizar_fila, cargar_memoria_agente, exportar_csv, guardar_memoria_agente
 from .recorrido import estado_proyecto
 from .responder import origenes_permitidos
+from .operaciones import programar
+from .flujo import marcar_avance, invalidar_avance
 
 
 def mostrar_lotes(config, indice, demo):
@@ -50,44 +52,50 @@ def mostrar_lotes(config, indice, demo):
     st.caption("En modo real, DeepSeek recibe la pregunta y las fuentes permitidas; una segunda llamada compara la respuesta obtenida con la conocida. No se envía el informe base. La clasificación es automática y puede requerir revisión.")
     active = [row for row in questions if str(row["Pregunta"]).strip()]
     left, right = st.columns(2)
-    if left.button("Guardar mesa de trabajo", key="guardar_mesa", width="stretch"):
+    if st.button_in(left, "Guardar mesa de trabajo", key="guardar_mesa", width="stretch"):
         memory["preguntas"] = questions
         guardar_memoria_agente(memory_path, memory)
         st.success("Preguntas guardadas en la memoria local del agente.")
     state = estado_proyecto(config, indice, demo)
     ready = bool(active) and (demo or state["clave_configurada"]) and (mode == "A" or state["indice_listo"])
-    if right.button(f"Analizar {len(active)} preguntas", key="analizar_lote", type="primary", disabled=not ready, width="stretch"):
-        # El mismo permiso cubre preguntas/respuestas conocidas sensibles, incluso en A.
-        origenes_permitidos(config, origin)
-        client = ClienteFalso() if demo else ClienteDeepSeek(config)
-        report_name = memory.get("informe", "")
-        if report_name and (Path(report_name).name != report_name or not report_name.startswith("informe_base.") or Path(report_name).suffix not in {".pdf", ".docx", ".txt", ".md"}):
-            raise ValueError("La referencia al informe en la memoria no es válida. Vuelve a cargar el informe.")
-        report_path = folder / report_name if report_name else None
-        if report_path and not report_path.is_file():
-            raise ValueError("El informe guardado no está disponible. Vuelve a cargarlo antes de analizar.")
-        memory.update({"preguntas": questions, "resultados": [], "tratamiento": mode, "origen": origin})
-        memory["archivo_csv"] = f"consultas_{sello()}.csv"
-        guardar_memoria_agente(memory_path, memory)
-        embedder = (EmbedderFalso() if demo else EmbeddingsLocales(config.embedding_model)) if report_path else None
-        progress = st.progress(0, text="Preparando el lote…")
-        report_cache = {}
-        for position, row in enumerate(active):
-            try:
-                result = analizar_fila(row, config, indice, client, tratamiento=mode, origen=origin,
-                                       informe=report_path, embedder=embedder, demo=demo, cache_informe=report_cache)
-                if report_path:
-                    result["informe_base"] = memory.get("informe_nombre", report_path.name)
-            except (ValueError, ErrorLLM, OSError) as error:
-                result = {"pregunta": row["Pregunta"], "respuesta_conocida": row["Respuesta conocida"],
-                          "respuesta": "", "coincidencia": "Revisar", "explicacion": "Consulta no completada.",
-                          "error": str(error), "tratamiento": mode, "origen": origin}
-            memory["resultados"].append(result)
+    if st.button_in(right, f"Analizar {len(active)} preguntas", key="analizar_lote", type="primary", disabled=not ready, width="stretch"):
+        def analizar():
+            if mode == "C":
+                invalidar_avance(config, "consulta", demo)
+            # El mismo permiso cubre preguntas/respuestas conocidas sensibles, incluso en A.
+            origenes_permitidos(config, origin)
+            client = ClienteFalso() if demo else ClienteDeepSeek(config)
+            report_name = memory.get("informe", "")
+            if report_name and (Path(report_name).name != report_name or not report_name.startswith("informe_base.") or Path(report_name).suffix not in {".pdf", ".docx", ".txt", ".md"}):
+                raise ValueError("La referencia al informe en la memoria no es válida. Vuelve a cargar el informe.")
+            report_path = folder / report_name if report_name else None
+            if report_path and not report_path.is_file():
+                raise ValueError("El informe guardado no está disponible. Vuelve a cargarlo antes de analizar.")
+            memory.update({"preguntas": questions, "resultados": [], "tratamiento": mode, "origen": origin})
+            memory["archivo_csv"] = f"consultas_{sello()}.csv"
             guardar_memoria_agente(memory_path, memory)
-            (folder / memory["archivo_csv"]).write_bytes(exportar_csv(memory["resultados"]))
-            progress.progress((position + 1) / len(active), text=f"Analizadas {position + 1} de {len(active)} preguntas")
-        st.success("Lote guardado. Revisa la comparación y las ubicaciones antes de usarlo como evidencia.")
-        st.caption(f"CSV guardado en: {folder / memory['archivo_csv']}")
+            embedder = (EmbedderFalso() if demo else EmbeddingsLocales(config.embedding_model)) if report_path else None
+            progress = st.progress(0, text="Preparando el lote…")
+            report_cache = {}
+            for position, row in enumerate(active):
+                try:
+                    result = analizar_fila(row, config, indice, client, tratamiento=mode, origen=origin,
+                                           informe=report_path, embedder=embedder, demo=demo, cache_informe=report_cache)
+                    if report_path:
+                        result["informe_base"] = memory.get("informe_nombre", report_path.name)
+                except (ValueError, ErrorLLM, OSError) as error:
+                    result = {"pregunta": row["Pregunta"], "respuesta_conocida": row["Respuesta conocida"],
+                              "respuesta": "", "coincidencia": "Revisar", "explicacion": "Consulta no completada.",
+                              "error": str(error), "tratamiento": mode, "origen": origin}
+                memory["resultados"].append(result)
+                guardar_memoria_agente(memory_path, memory)
+                (folder / memory["archivo_csv"]).write_bytes(exportar_csv(memory["resultados"]))
+                progress.progress((position + 1) / len(active), text=f"Analizadas {position + 1} de {len(active)} preguntas")
+            st.success("Lote guardado. Revisa la comparación y las ubicaciones antes de usarlo como evidencia.")
+            st.caption(f"CSV guardado en: {folder / memory['archivo_csv']}")
+            if mode == "C" and memory["resultados"] and not any(row.get("error") or row.get("motivo_respuesta") in {"salida_json_invalida", "sin_citas_verificadas"} for row in memory["resultados"]):
+                marcar_avance(config, "consulta", demo)
+        programar("Analizando las preguntas del lote...", analizar)
     if not ready:
         st.info("Agrega al menos una pregunta. En modo real necesitas la clave; para C, prepara primero el índice.")
     results = memory.get("resultados", [])
