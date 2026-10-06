@@ -12,8 +12,10 @@ from anclaje.cli import preparar_humo
 from anclaje.config import ADVERTENCIA, cargar_config
 from anclaje.embeddings import EmbeddingsLocales
 from anclaje.indice import Indice
+from anclaje.interfaz_fuentes import mostrar_fuentes, mostrar_memoria
 from anclaje.llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
-from anclaje.responder import responder
+from anclaje.memoria import TRATAMIENTOS
+from anclaje.responder import control, responder
 
 st.set_page_config(page_title="Anclaje · Nada sin fuente", page_icon="⚓")
 st.title("Anclaje")
@@ -30,31 +32,38 @@ def recursos(archivo: str, firma: int, demo: bool):
                          chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
 
 
-try:
-    archivo = Path(os.getenv("ANCLAJE_CONFIG", "config.yaml")).resolve()
-    demo = "--demo" in sys.argv or os.getenv("ANCLAJE_DEMO", "false").lower() == "true"
-    firma = max(archivo.stat().st_mtime_ns, (archivo.parent / ".env").stat().st_mtime_ns if (archivo.parent / ".env").exists() else 0)
-    config, index = recursos(str(archivo), firma, demo)
-    if demo:
-        st.warning("Demostración con documentos sintéticos, embeddings falsos y cliente falso. No mide calidad real.")
-    if config.allow_counterpart_cloud:
-        st.warning(ADVERTENCIA)
-    origen = st.selectbox("Origen de las fuentes", ["publicos", "contraparte", "ambos"])
-    st.info("Contraparte se consulta localmente con buscar. Enviar sus fragmentos a DeepSeek requiere autorización escrita y ALLOW_COUNTERPART_CLOUD=true.")
-    try:
-        state = index.estado()
-        st.caption(f"Índice disponible: {state['fragmentos']} fragmentos.")
-    except ValueError:
-        st.warning("Añade tus documentos y ejecuta python -m anclaje reindexar antes de consultar.")
-    st.caption(f"Preparación de interfaz e índice: {perf_counter() - INICIO:.3f} s. El modelo local se carga al consultar.")
+def mostrar_consulta(config, index, demo):
+    pending = not demo and (st.session_state.get("indice_pendiente", False) or (config.docs_dir / ".indice_pendiente").exists())
+    treatment = st.selectbox("Tratamiento de la consulta", ["C", "A", "B"], key="tratamiento_consulta",
+                             format_func=lambda code: f"{code} · {TRATAMIENTOS[code][0]} · {TRATAMIENTOS[code][1]}")
+    if treatment == "B":
+        st.info("B corresponde a Natalia: realiza la consulta en el buscador bibliográfico elegido, abre las referencias y registra los resultados en tu experimento. Puedes guardar sus documentos como evidencias en la pestaña Fuentes.")
+        return
+    origin = "publicos"
+    if treatment == "C":
+        origin = st.selectbox("Origen de las fuentes", ["publicos", "contraparte", "ambos"], key="origen_consulta")
+        st.info("Contraparte se consulta localmente con buscar. Enviar sus fragmentos a DeepSeek requiere autorización escrita y ALLOW_COUNTERPART_CLOUD=true.")
+        try:
+            state = index.estado()
+            st.caption(f"Índice disponible: {state['fragmentos']} fragmentos.")
+        except ValueError:
+            st.warning("Incorpora tus documentos en la pestaña Fuentes y pulsa Actualizar índice antes de consultar.")
+        if pending:
+            st.warning("Hay fuentes nuevas. Actualiza el índice en la pestaña Fuentes.")
+    else:
+        st.info("A corresponde a Harold: la pregunta se envía a DeepSeek sin documentos ni navegación. Su respuesta se revisa como control del experimento.")
     with st.form("consulta"):
-        pregunta = st.text_input("Pregunta sobre tus fuentes")
-        enviado = st.form_submit_button("Consultar")
+        pregunta = st.text_input("Pregunta", key="pregunta_consulta")
+        enviado = st.form_submit_button("Consultar", key="consultar", disabled=treatment == "C" and pending)
     if enviado:
-        with st.spinner("Consultando las fuentes…"):
+        if not pregunta.strip():
+            raise ValueError("La pregunta no puede estar vacía.")
+        if treatment == "C" and pending:
+            raise ValueError("Actualiza el índice antes de consultar las nuevas fuentes.")
+        with st.spinner("Preparando la respuesta…"):
             start = perf_counter()
             client = ClienteFalso() if demo else ClienteDeepSeek(config)
-            result = responder(pregunta, config, index, client, origen=origen)
+            result = responder(pregunta, config, index, client, origen=origin) if treatment == "C" else control(pregunta, client)
         st.write(result.respuesta)
         if any(c.estado == "no_verificada" for c in result.citas):
             st.warning("Hay citas no verificadas. Revisa la respuesta manualmente.")
@@ -65,11 +74,37 @@ try:
                 if cite.fragmento:
                     st.caption("Fragmento de soporte")
                     st.text(cite.fragmento)
-        with st.expander("Fragmentos recuperados"):
-            for fragment in result.fragmentos:
-                st.caption(f"[{fragment.documento}, p. {fragment.pagina}] · similitud {fragment.similitud:.3f}")
-                st.text(fragment.texto)
+        if treatment == "C":
+            with st.expander("Fragmentos recuperados"):
+                for fragment in result.fragmentos:
+                    st.caption(f"[{fragment.documento}, p. {fragment.pagina}] · similitud {fragment.similitud:.3f}")
+                    st.text(fragment.texto)
         st.caption(f"Consulta completada en {perf_counter() - start:.3f} s.")
+
+
+try:
+    archivo = Path(os.getenv("ANCLAJE_CONFIG", "config.yaml")).resolve()
+    demo = "--demo" in sys.argv or os.getenv("ANCLAJE_DEMO", "false").lower() == "true"
+    firma = max(archivo.stat().st_mtime_ns, (archivo.parent / ".env").stat().st_mtime_ns if (archivo.parent / ".env").exists() else 0)
+    config, index = recursos(str(archivo), firma, demo)
+    if demo:
+        st.warning("Demostración con documentos sintéticos, embeddings falsos y cliente falso. No mide calidad real.")
+    if config.allow_counterpart_cloud:
+        st.warning(ADVERTENCIA)
+    consulta, fuentes, memoria = st.tabs(["Consultar", "Fuentes", "Memoria"])
+    for tab, function, args in (
+        (fuentes, mostrar_fuentes, (config, index, demo)),
+        (memoria, mostrar_memoria, (config,)),
+        (consulta, mostrar_consulta, (config, index, demo)),
+    ):
+        with tab:
+            try:
+                function(*args)
+            except (ValueError, ErrorLLM) as error:
+                st.error(str(error))
+            except OSError:
+                st.error("No se pudo acceder a la carpeta o al archivo. Revisa la ruta y los permisos.")
+    st.caption(f"Preparación de interfaz e índice: {perf_counter() - INICIO:.3f} s. El modelo local se carga al consultar.")
 except (ValueError, ErrorLLM) as error:
     st.error(str(error))
 except OSError:
