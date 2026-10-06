@@ -33,6 +33,7 @@ class ClienteDeepSeek:
                 model=self.config.llm_model, messages=mensajes,
                 temperature=self.config.temperature, max_tokens=self.config.max_tokens,
                 response_format={"type": "json_object"},
+                extra_body={"thinking": {"type": "disabled"}},
             )
         except Exception:
             raise ErrorLLM(

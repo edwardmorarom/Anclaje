@@ -6,12 +6,12 @@ from dataclasses import replace
 from pathlib import Path
 from time import perf_counter
 
+from .biblioteca import actualizar_indice
 from .config import cargar_config
 from .embeddings import EmbedderFalso, EmbeddingsLocales
 from .evaluar import barrido, evaluar
 from .fragmentos import fragmentar
 from .indice import Indice
-from .ingesta import leer_corpus
 from .llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
 from .modelos import Pagina
 from .responder import responder
@@ -115,12 +115,10 @@ def main(argv=None) -> int:
         embedder = EmbeddingsLocales(config.embedding_model, permitir_descarga=args.comando == "reindexar")
         index = Indice(config.index_dir, embedder, chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
         if args.comando == "reindexar":
-            pages = leer_corpus(config.docs_dir)
-            fragments = fragmentar(pages, config.chunk_size, config.chunk_overlap)
-            if not fragments:
-                raise ValueError("No hay texto para indexar. Añade documentos legibles a docs/publicos o docs/contraparte.")
-            index.reconstruir(fragments, chunk_size=config.chunk_size, chunk_overlap=config.chunk_overlap)
-            print(f"Índice reconstruido: {len(fragments)} fragmentos, {len(pages)} páginas.")
+            summary = actualizar_indice(config, index)
+            for notice in summary["avisos"]:
+                print(f"ADVERTENCIA: {notice}", file=sys.stderr)
+            print(f"Índice reconstruido: {summary['fragmentos']} fragmentos, {summary['paginas']} páginas.")
         elif args.comando == "buscar":
             if not args.texto.strip():
                 raise ValueError("La búsqueda no puede estar vacía.")

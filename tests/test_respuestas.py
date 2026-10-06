@@ -119,3 +119,20 @@ def test_control_conserva_citas_para_revision_sin_verificarlas():
     result = control("Pregunta", client)
     assert not result.abstencion and not result.sostenida_por_fragmento
     assert result.citas[0].estado == "no_verificada"
+
+
+def test_cliente_deepseek_json_y_temperatura_con_transporte_falso(config):
+    from types import SimpleNamespace
+
+    calls = []
+
+    def create(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason="stop", message=SimpleNamespace(content='{"respuesta":"No está en las fuentes.","abstencion":true,"citas":[]}'))])
+
+    client = ClienteDeepSeek(replace(config, api_key=object()))
+    client._client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+    client.generar([{"role": "system", "content": "Devuelve json."}])
+    assert calls[0]["response_format"] == {"type": "json_object"}
+    assert calls[0]["temperature"] == 0.0
+    assert calls[0]["extra_body"] == {"thinking": {"type": "disabled"}}

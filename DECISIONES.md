@@ -15,3 +15,28 @@
 - Los nombres de documento son rutas relativas a docs con el origen incluido; evitan confundir archivos homónimos públicos y privados.
 - El arranque se mide en procesos nuevos con un índice sintético persistente; no se presenta como tiempo de carga de pesos reales ni de consulta a DeepSeek.
 - La demo sintética usa indice/humo y se etiqueta de forma visible; no crea un corpus real ni sustituye las mediciones académicas.
+- La interfaz copia documentos seleccionados y conserva originales; evita sobreescribir archivos distintos o duplicar una importación idéntica.
+- Los nombres Edward, Natalia y Harold sugieren C, B y A respectivamente; la vista previa hace visible la asignación y evita mezclar carpetas reconocidas.
+- C alimenta docs; los documentos de A/B se conservan como evidencias locales en resultados, porque el control A debe responder sin fuentes y B sigue siendo externo.
+- Tratamiento y privacidad son campos diferentes; una carpeta de Edward puede contener fuentes de contraparte y no se considera pública por su responsable.
+- El selector de carpeta se ejecuta en un proceso separado con Tk; la selección de archivos por navegador y la ruta escrita permiten trabajar si ese selector no está disponible.
+- La memoria reproduce los seis apartados de la imagen compartida y se edita con evidencia real; no se implementa reconocimiento automático de imágenes ni se inventan resultados.
+- Una marca local mantiene las consultas C pendientes tras importar hasta actualizar el índice, incluso al recargar la app.
+- Se ignoran todas las variantes .env, incluida .env copy.example, y se conserva solo la plantilla .env.example; evita incorporar accidentalmente copias de credenciales.
+- La navegación muestra un paso por pantalla con Anterior/Continuar y acceso lateral; los borradores se conservan al cambiar de paso.
+- Importar y preparar son pasos distintos; no se permite avanzar a consulta C con un índice inexistente o pendiente.
+- El inicio comprueba requisitos locales y ofrece una prueba de API que solo se ejecuta al pulsar el botón; no se transmite ningún documento ni se imprime la clave para diagnosticar el proyecto.
+- El banco puede crearse e importarse desde la interfaz; se valida antes de reemplazar el anterior y se separa el banco demo del real.
+- La mesa de consultas admite filas dinámicas y usa comparación semántica explicada por DeepSeek, solicitada por el usuario; no se usa igualdad literal ni se incorpora ese juicio a las métricas de fidelidad del evaluador original.
+- La respuesta conocida es un dato de referencia que debe verificar el equipo; Coincide no equivale a verdad ni a cita válida. Una comparación incompleta o fallida se marca Revisar.
+- El informe base se conserva separado del corpus y sus ubicaciones se buscan localmente, con vectores reutilizados dentro del lote. Las sugerencias no se etiquetan como páginas confirmadas.
+- La memoria operativa usa JSON versionado y escritura temporal seguida de reemplazo; se guarda tras cada consulta. La memoria académica conserva JSON y Markdown independientes.
+- El CSV del lote usa punto y coma y UTF-8 con BOM; neutraliza fórmulas al abrir textos en Excel. Los fallos por fila quedan registrados sin perder respuestas anteriores.
+- La app exige confirmar un destino antes de procesar; recuerda la carpeta, comprueba escritura y muestra el destino. Se cambia results_dir solo para esa ejecución de la app, sin modificar config.yaml ni mover archivos anteriores.
+- Los CSV de lotes se escriben automáticamente tras cada respuesta. Los bancos creados en la app también siguen el destino, mientras que el CLI conserva sus rutas explícitas.
+- Dentro del repositorio los resultados se limitan al directorio excluido de Git; se permiten carpetas externas. La configuración de descargas del navegador es independiente de las copias automáticas.
+- Los requisitos se aplican tanto a Continuar como al menú lateral: destino, fuentes C, índice listo, consulta C completada y evaluación sin errores. Los checks describen avance técnico, no cumplimiento de toda la rúbrica.
+- El avance persiste en recorrido.json por destino y corpus; cambios de documentos, parámetros o protocolo invalidan consultas/evaluaciones, y cambios del banco invalidan la evaluación. Una ejecución nueva invalida su check previo hasta terminar correctamente.
+- Las operaciones costosas se programan y la interfaz se vuelve a dibujar con controles nativamente deshabilitados antes de ejecutarlas. Una segunda operación se rechaza; los controles se liberan también ante errores. El bloqueo es por sesión.
+- Los checks y candados del menú, instrucciones por paso y borde dorado orientan la siguiente acción. Se conserva la selección del menú explícitamente cuando cambian las etiquetas para evitar saltos de pantalla.
+- Se desactiva thinking en la llamada a DeepSeek para respetar temperatura 0 y el presupuesto de salida; la documentación actual indica que thinking está activo por defecto y que ignora temperature (https://api-docs.deepseek.com/guides/thinking_mode/).
