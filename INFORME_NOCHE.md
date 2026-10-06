@@ -144,3 +144,55 @@ documentación técnica. No se usó un LLM juez, no se verificaron referencias
 bibliográficas del proyecto ni se generaron resultados académicos reales.
 Incluye este uso en tu declaración de la actividad y añade tus correcciones
 y la evidencia obtenida al trabajar con el corpus.
+
+## Ampliación de interfaz — 6 de octubre de 2026
+
+Se incorporaron tres pestañas: Consultar, Fuentes y Memoria.
+
+- **Fuentes:** selector nativo de carpeta, ruta escrita o selección de archivos
+  desde el navegador; vista previa, selección de documentos y subcarpetas
+  opcionales. Importa copias locales, conserva los originales, evita duplicados
+  de una misma importación y conserva ambos contenidos ante colisiones de nombre.
+- **Tratamientos de las capturas:** Edward/edward se reconoce como C, Natalia
+  como B y Harold como A, también dentro de una carpeta principal como II.
+  Al elegir un tratamiento, la selección inicial incluye sus documentos.
+  Se evita incorporar archivos de otros responsables reconocidos por accidente.
+- **Privacidad:** el tratamiento no determina la privacidad del archivo. C se
+  incorpora al corpus local en docs; A/B se guardan como evidencias locales en
+  resultados y no alimentan C. El control A consulta sin fuentes y B sigue
+  realizándose en la herramienta bibliográfica externa.
+- **Actualizar índice:** botón en la app, con avisos de ingesta. Las consultas
+  C quedan pendientes tras importar hasta actualizar el índice, incluso si se
+  recarga la app. La primera indexación real puede descargar los pesos locales.
+- **Memoria:** los seis apartados de la última imagen compartida se muestran
+  como campos editables con orientación; se guarda un borrador local y se puede
+  descargar Markdown. No se rellenan resultados automáticamente ni se implementa
+  análisis de imágenes. La extensión final de 2 a 4 páginas requiere dar formato
+  al documento y revisarla.
+- Se amplió .gitignore para excluir copias de .env como `.env copy.example`.
+  No se mostró, modificó ni incorporó la clave al repositorio.
+
+Validación: **79 pruebas pasan sin red ni clave**, incluidos el recorrido real
+de la interfaz con dobles para embeddings/LLM, separación A/B/C, importación,
+colisiones, rutas de destino, persistencia del estado pendiente y memoria.
+En la última suite medida: 79 passed, 5 warnings in 7.97s (avisos SWIG existentes).
+La primera pantalla sintética de la app ampliada se midió en **3,732 s** en un
+proceso nuevo y el servidor hasta health en **1,264 s**.
+
+El selector Tk se verificó por importación y su llamada se probó con un doble;
+el diálogo visible se abrirá cuando el usuario pulse el botón. No se abrió una
+ventana ni se importaron documentos reales durante la construcción. Tampoco
+se llamó a DeepSeek ni se descargaron pesos para medir calidad real.
+
+Para usar la ampliación, reinicia Streamlit:
+
+```text
+.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+En **Fuentes**, elige la carpeta `edward`, pulsa **Revisar carpeta**, confirma
+**C**, revisa los archivos, pulsa **Importar selección** y **Actualizar índice**.
+También puedes elegir la carpeta principal `II` y activar **Incluir subcarpetas**.
+En **Memoria**, completa los seis apartados con evidencia de tu experimento.
+La asignación de responsables organiza el trabajo; la comparación requiere
+ejecutar la misma consulta en A, B y C.

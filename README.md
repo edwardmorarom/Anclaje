@@ -73,6 +73,41 @@ ya presentes en caché: no descargan modelos ni usan una API de embeddings.
 
 ## Comandos
 
+También puedes incorporar documentos desde la **pestaña Fuentes** de la app:
+
+1. Pulsa **Elegir carpeta del computador** o pega la ruta. El selector nativo
+   requiere Tk y se abre en el computador que ejecuta Streamlit. Puedes elegir
+   archivos con el navegador si usas la app desde otro computador.
+2. Pulsa **Revisar carpeta**. Activa **Incluir subcarpetas** para reconocer una
+   estructura como `II/edward`, `II/Harold` y `II/natalia`.
+3. Revisa el tratamiento sugerido y selecciona los documentos. `Edward → C`,
+   `Harold → A`, `Natalia → B`; los nombres se reconocen sin distinguir mayúsculas.
+4. Pulsa **Importar selección**. Se conservan originales y nombres, se copian
+   solo los documentos seleccionados y se registra su procedencia. Si un nombre
+   ya existe con contenido distinto, la copia nueva recibe un sufijo; repetir
+   el mismo archivo no duplica su contenido en ese grupo.
+5. Para **C**, pulsa **Actualizar índice**. La app prepara los embeddings
+   localmente y vuelve a habilitar las consultas. Este estado pendiente se
+   conserva al recargar la app. El CLI `reindexar` también actualiza ese estado.
+
+La importación C va a `docs/publicos/` o `docs/contraparte/`, según la privacidad
+seleccionada. A y B se conservan bajo `resultados/evidencias/A/` y
+`resultados/evidencias/B/`: son evidencias del experimento y no forman parte del
+contexto C. Los temporales Word `~$...`, archivos ocultos y formatos CSV/XLSX se
+omiten del corpus. La app no determina automáticamente si un archivo es público.
+
+La pestaña **Consultar** ofrece C y A; A envía exclusivamente la pregunta al
+LLM. B se realiza en la herramienta bibliográfica externa elegida. La asignación
+por integrante organiza el trabajo: para comparar tratamientos deben repetir
+la misma pregunta en A, B y C.
+
+La pestaña **Memoria** reproduce los seis apartados de la imagen del enunciado:
+Diagnóstico; Experimento y decisión; El sistema; Evaluación; Qué corrigieron de
+su propio anteproyecto; Declaración de uso de IA. Permite editar, guardar el
+borrador local y descargar Markdown. No completa resultados ni afirmaciones:
+debes aportar tus evidencias y verificar la extensión final de 2 a 4 páginas.
+Los borradores se guardan en `resultados/memoria/`, fuera de Git.
+
 ```text
 python -m anclaje reindexar
 python -m anclaje buscar "frase del anteproyecto"

@@ -15,3 +15,11 @@
 - Los nombres de documento son rutas relativas a docs con el origen incluido; evitan confundir archivos homónimos públicos y privados.
 - El arranque se mide en procesos nuevos con un índice sintético persistente; no se presenta como tiempo de carga de pesos reales ni de consulta a DeepSeek.
 - La demo sintética usa indice/humo y se etiqueta de forma visible; no crea un corpus real ni sustituye las mediciones académicas.
+- La interfaz copia documentos seleccionados y conserva originales; evita sobreescribir archivos distintos o duplicar una importación idéntica.
+- Los nombres Edward, Natalia y Harold sugieren C, B y A respectivamente; la vista previa hace visible la asignación y evita mezclar carpetas reconocidas.
+- C alimenta docs; los documentos de A/B se conservan como evidencias locales en resultados, porque el control A debe responder sin fuentes y B sigue siendo externo.
+- Tratamiento y privacidad son campos diferentes; una carpeta de Edward puede contener fuentes de contraparte y no se considera pública por su responsable.
+- El selector de carpeta se ejecuta en un proceso separado con Tk; la selección de archivos por navegador y la ruta escrita permiten trabajar si ese selector no está disponible.
+- La memoria reproduce los seis apartados de la imagen compartida y se edita con evidencia real; no se implementa reconocimiento automático de imágenes ni se inventan resultados.
+- Una marca local mantiene las consultas C pendientes tras importar hasta actualizar el índice, incluso al recargar la app.
+- Se ignoran todas las variantes .env, incluida .env copy.example, y se conserva solo la plantilla .env.example; evita incorporar accidentalmente copias de credenciales.
