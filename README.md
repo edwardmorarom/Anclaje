@@ -128,6 +128,42 @@ Los borradores se guardan en `resultados/memoria/`, fuera de Git.
 
 El diagnóstico actualizado y los pendientes están en [PENDIENTES.md](PENDIENTES.md).
 
+### Mesa de preguntas y memoria del agente
+
+La interfaz usa un tema claro en blanco, negro y dorado suave. Reinicia Streamlit
+para cargar el tema de `.streamlit/config.toml`.
+
+En **Consultar → Tabla de preguntas**, agrega filas o pega varias celdas desde
+Excel. Completa Pregunta y Respuesta conocida; la página confirmada del informe
+es opcional. Usa **Guardar mesa de trabajo** para conservar el borrador antes
+de cerrar el navegador. **Analizar preguntas** ejecuta el lote y guarda cada
+resultado al terminar, aunque una pregunta posterior falle.
+
+La comparación de significado usa una llamada adicional a DeepSeek por respuesta
+conocida. Acepta paráfrasis y distingue contradicciones, cantidades y negaciones;
+devuelve **Coincide**, **No coincide** o **Revisar**, con explicación. Es una
+clasificación automática, no una certificación de verdad. La respuesta conocida
+debe haber sido verificada por el equipo. La evaluación A/C del paso Evaluar
+mantiene sus métricas y revisión manual independientes de este comparador.
+
+Puedes cargar el **informe base** dentro de esta pantalla. Se guarda separado del
+corpus C y se busca con embeddings locales; no se envía al comparador. Se muestran
+hasta tres páginas sugeridas y sus fragmentos para comprobarlas. La página de la
+fuente citada y la del informe base son columnas distintas. Usa PDF con texto
+para páginas estables; DOCX tiene paginación estimada y los escaneos requieren OCR.
+
+La descarga **CSV separado por ;** incluye pregunta, respuesta conocida,
+respuesta obtenida, coincidencia y explicación, fuente/página, ubicaciones
+sugeridas del informe y página confirmada. Usa UTF-8 con BOM para Excel, conserva
+acentos y protege textos que podrían interpretarse como fórmulas.
+
+La memoria operativa se guarda en `resultados/agente/memoria.json`, con versión,
+fecha de actualización, preguntas, último lote y referencia al informe. Se carga
+al abrir la pantalla en una sesión nueva; no contiene claves, permanece fuera
+de Git y no modifica el protocolo ni entrena el modelo. Es persistencia de trabajo,
+distinta de la memoria académica de seis apartados. En demo usa
+`resultados/humo/agente/` y no evalúa equivalencia semántica real.
+
 ```text
 python -m anclaje reindexar
 python -m anclaje buscar "frase del anteproyecto"

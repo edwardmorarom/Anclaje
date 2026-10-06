@@ -238,3 +238,30 @@ las evidencias que todavía hay que producir para entregar la actividad.
 Para usar la versión actual, reinicia Streamlit con el comando anterior,
 selecciona Inicio y sigue Continuar. El orden actual para C es **importar en
 Fuentes, preparar en Preparar y preguntar en Consultar**.
+
+## Diseño claro, consultas por lote y memoria operativa
+
+Se añadió el tema claro con blanco, negro y dorado suave, ancho de trabajo mayor,
+portada y estilos de navegación. En Consultar se puede alternar entre pregunta
+individual y una tabla con filas dinámicas. Los lotes comparan significado con
+una segunda llamada a DeepSeek por respuesta conocida: Coincide, No coincide o
+Revisar, con explicación. El comparador no demuestra la verdad de la referencia
+y no modifica las métricas originales de Evaluar.
+
+El informe base se carga separado del corpus C y no se envía a DeepSeek. La
+búsqueda local propone páginas con fragmentos, separadas de las páginas de las
+fuentes citadas. La confirmación de ubicaciones sigue siendo manual.
+
+El CSV usa punto y coma, UTF-8 con BOM y protección de fórmulas. La memoria
+operativa en resultados/agente/memoria.json conserva preguntas, resultados del
+último lote y referencia al informe entre sesiones; se actualiza después de cada
+respuesta. El borrador puede guardarse sin ejecutar consultas. La demo usa otra
+carpeta. No se modificó la clave ni se realizaron llamadas reales durante el
+desarrollo. La clasificación semántica real requiere validación con ejemplos
+conocidos, incluyendo paráfrasis y contradicciones.
+
+Validación de esta ampliación: **98 pruebas pasan sin red ni clave** en 10,34 s,
+con cinco avisos SWIG existentes. Incluye persistencia entre sesiones, ejecución
+de lotes en la interfaz, comparación inválida o fallida, CSV con delimitadores
+y saltos de línea, protección de fórmulas y paginación del informe. No se midió
+calidad semántica real ni se realizó una inspección visual en navegador.

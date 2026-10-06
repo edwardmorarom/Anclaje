@@ -3,12 +3,14 @@ from dataclasses import asdict, replace
 import streamlit as st
 
 from .biblioteca import actualizar_indice
+from .diseno import mostrar_portada
 from .evaluar import evaluar, leer_banco
 from .llm import ClienteDeepSeek, ClienteFalso
 from .recorrido import PASOS, agregar_pregunta, importar_banco, resumen_banco, ruta_banco
 from .responder import control
 
 CAMPOS = {
+    "espacio_consulta", "lote_tratamiento", "lote_origen",
     "carpeta_fuentes", "subcarpetas_fuentes", "metodo_importacion", "origen_importacion",
     "permiso_importacion", "verificador_importacion", "tratamiento_archivos",
     "tratamiento_consulta", "origen_consulta", "pregunta_consulta", "evaluacion_falsa", "origen_evaluacion",
@@ -51,6 +53,7 @@ def botones_paso(paso, *, puede_continuar=True, motivo=""):
 
 
 def mostrar_inicio(config, estado, demo):
+    mostrar_portada()
     st.write("Sigue los pasos de la izquierda. En cada pantalla encontrarás qué hacer y un botón para continuar.")
     rows = [
         {"Requisito": "Clave de DeepSeek", "Estado": "Configurada; conexión por comprobar" if estado["clave_configurada"] else "Pendiente",

@@ -27,4 +27,9 @@
 - Importar y preparar son pasos distintos; no se permite avanzar a consulta C con un índice inexistente o pendiente.
 - El inicio comprueba requisitos locales y ofrece una prueba de API que solo se ejecuta al pulsar el botón; no se transmite ningún documento ni se imprime la clave para diagnosticar el proyecto.
 - El banco puede crearse e importarse desde la interfaz; se valida antes de reemplazar el anterior y se separa el banco demo del real.
+- La mesa de consultas admite filas dinámicas y usa comparación semántica explicada por DeepSeek, solicitada por el usuario; no se usa igualdad literal ni se incorpora ese juicio a las métricas de fidelidad del evaluador original.
+- La respuesta conocida es un dato de referencia que debe verificar el equipo; Coincide no equivale a verdad ni a cita válida. Una comparación incompleta o fallida se marca Revisar.
+- El informe base se conserva separado del corpus y sus ubicaciones se buscan localmente, con vectores reutilizados dentro del lote. Las sugerencias no se etiquetan como páginas confirmadas.
+- La memoria operativa usa JSON versionado y escritura temporal seguida de reemplazo; se guarda tras cada consulta. La memoria académica conserva JSON y Markdown independientes.
+- El CSV del lote usa punto y coma y UTF-8 con BOM; neutraliza fórmulas al abrir textos en Excel. Los fallos por fila quedan registrados sin perder respuestas anteriores.
 - Se desactiva thinking en la llamada a DeepSeek para respetar temperatura 0 y el presupuesto de salida; la documentación actual indica que thinking está activo por defecto y que ignora temperature (https://api-docs.deepseek.com/guides/thinking_mode/).

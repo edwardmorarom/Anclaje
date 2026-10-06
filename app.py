@@ -11,6 +11,8 @@ import streamlit as st
 from anclaje.cli import preparar_humo
 from anclaje.config import cargar_config
 from anclaje.embeddings import EmbeddingsLocales
+from anclaje.diseno import aplicar_diseno
+from anclaje.interfaz_lotes import mostrar_lotes
 from anclaje.indice import Indice
 from anclaje.interfaz_fuentes import mostrar_fuentes, mostrar_memoria
 from anclaje.interfaz_recorrido import botones_paso, conservar_campos, mostrar_evaluacion, mostrar_inicio, mostrar_preparacion, restaurar_campos
@@ -19,7 +21,8 @@ from anclaje.memoria import TRATAMIENTOS
 from anclaje.recorrido import DESCRIPCIONES, PASOS, estado_proyecto
 from anclaje.responder import control, responder
 
-st.set_page_config(page_title="Anclaje · Nada sin fuente", page_icon="⚓")
+st.set_page_config(page_title="Anclaje · Nada sin fuente", page_icon="⚓", layout="wide")
+aplicar_diseno()
 
 
 @st.cache_resource
@@ -33,6 +36,10 @@ def recursos(archivo: str, firma: int, demo: bool):
 
 
 def mostrar_consulta(config, index, demo):
+    view = st.radio("Espacio de consulta", ["Una pregunta", "Tabla de preguntas"], horizontal=True, key="espacio_consulta")
+    if view == "Tabla de preguntas":
+        mostrar_lotes(config, index, demo)
+        return
     pending = not demo and (st.session_state.get("indice_pendiente", False) or (config.docs_dir / ".indice_pendiente").exists())
     ready = estado_proyecto(config, index, demo)["indice_listo"]
     treatment = st.selectbox("Tratamiento de la consulta", ["C", "A", "B"], key="tratamiento_consulta",
