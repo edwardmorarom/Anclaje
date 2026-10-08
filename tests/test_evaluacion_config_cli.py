@@ -34,6 +34,9 @@ def test_wilson_sin_datos_e_invalido():
 
 def banco(path, *, counterpart=False):
     prefix = "contraparte" if counterpart else "publicos"
+    folder = path.parent / 'docs' / prefix
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / 'a.txt').write_text('media suma entre n\fmediana valor central', encoding='utf-8')
     rows = [
         {"pregunta": "media", "respuesta_conocida": "suma entre n", "documento": f"{prefix}/a.txt", "pagina": 1, "tipo": "en_corpus"},
         {"pregunta": "mediana", "respuesta_conocida": "valor central", "documento": f"{prefix}/a.txt", "pagina": 2, "tipo": "en_corpus"},
@@ -56,16 +59,17 @@ def test_evaluacion_ac_control_sin_degradar_y_metricas(config):
     client = ClienteFalso()
     output, metrics = evaluar(path, config, IndiceFalso(), client)
     with output.open(encoding="utf-8-sig", newline="") as file:
-        rows = list(csv.DictReader(file))
+        rows = list(csv.DictReader(file, delimiter=';'))
     assert len(rows) == 6
     assert all(row["revision_manual"] == "" for row in rows)
     assert all("protocolo_sha256" in row for row in rows)
     summary = {(r["tratamiento"], r["metrica"]): r for r in metrics}
     assert summary["C", "hit@k"]["aciertos"] == 2
     assert summary["C", "hit@k"]["n"] == 2
-    assert summary["C", "cita_verificada"]["proporcion"] == pytest.approx(2 / 3)
+    assert summary["C", "citas_textuales_validas"]["proporcion"] == pytest.approx(2 / 3)
+    assert summary["C", "fidelidad_revisada"]["n"] == 0
     assert summary["C", "abstencion_correcta_fuera"]["proporcion"] == 1
-    assert summary["C", "invencion_fuera"]["proporcion"] == 0
+    assert summary["C", "respuesta_fuera_sin_abstencion"]["proporcion"] == 0
     assert summary["A", "hit@k"]["n"] == 0
 
 
@@ -74,8 +78,8 @@ def test_control_respuesta_sin_citas_cuenta_invencion(config):
     client = ClienteFalso({"respuesta": "Respuesta sin soporte", "abstencion": False, "citas": []})
     _, metrics = evaluar(path, config, IndiceFalso(), client)
     summary = {(r["tratamiento"], r["metrica"]): r for r in metrics}
-    assert summary["A", "invencion_fuera"]["proporcion"] == 1
-    assert summary["C", "invencion_fuera"]["proporcion"] == 0
+    assert summary["A", "respuesta_fuera_sin_abstencion"]["proporcion"] == 1
+    assert summary["C", "respuesta_fuera_sin_abstencion"]["proporcion"] == 0
 
 
 def test_errores_api_no_cuentan_como_abstencion_correcta(config):
@@ -180,5 +184,5 @@ def test_cli_recorrido_completo_con_documentos_sinteticos(tmp_path, monkeypatch,
     capsys.readouterr()
     output = next((tmp_path / "resultados").glob("evaluacion_*.csv"))
     with output.open(encoding="utf-8-sig", newline="") as file:
-        rows = list(csv.DictReader(file))
+        rows = list(csv.DictReader(file, delimiter=';'))
     assert len(rows) == 6 and all(r["modelo_llm"] == "cliente-falso" for r in rows)

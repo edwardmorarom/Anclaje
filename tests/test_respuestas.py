@@ -26,7 +26,7 @@ class IndiceFalso:
 def test_citas_normalizadas_reales_e_inventadas():
     sources = [fragmento()]
     raw = [
-        {"documento": "publicos/a.pdf", "pagina": 3, "cita_textual": "ESTADISTICA  descriptiva"},
+        {"documento": "publicos/a.pdf", "pagina": 3, "cita_textual": "ESTADÍSTICA  descriptiva"},
         {"documento": "publicos/a.pdf", "pagina": 3, "cita_textual": "La luna es de queso."},
         {"documento": "publicos/a.pdf", "pagina": 4, "cita_textual": "resume los datos"},
         {"documento": "publicos/a.pdf", "pagina": 3, "cita_textual": "  "},
@@ -71,7 +71,7 @@ def test_privacidad_filtro_antes_de_enviar_a_llm(config):
     client = ClienteFalso()
     result = responder("Pregunta", config, index, client)
     assert index.origenes == ("publicos",)
-    assert result.sostenida_por_fragmento
+    assert result.citas_verificadas and result.sostenida_por_fragmento is None
     assert all(f.origen == "publicos" for f in result.fragmentos)
     assert "SECRETO" not in json.dumps(client.llamadas)
     assert "contraparte" not in client.llamadas[0][-1]["content"]
@@ -88,7 +88,7 @@ def test_selector_no_habilita_contraparte(config, origen):
 def test_contraparte_con_flag_explicito(config):
     client = ClienteFalso()
     result = responder("Pregunta", replace(config, allow_counterpart_cloud=True), IndiceFalso([fragmento("contraparte")]), client, origen="contraparte")
-    assert result.sostenida_por_fragmento
+    assert result.citas_verificadas and result.sostenida_por_fragmento is None
     assert "SECRETO" in json.dumps(client.llamadas, ensure_ascii=False)
 
 

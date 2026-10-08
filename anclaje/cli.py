@@ -40,7 +40,7 @@ def humo(config) -> dict:
     demo, index = preparar_humo(config)
     client = ClienteFalso()
     result = responder("media aritmética suma valores número observaciones", demo, index, client)
-    if not result.sostenida_por_fragmento:
+    if not result.citas_verificadas:
         raise ValueError("Falló la consulta de humo con citas verificadas.")
     if "CONTENIDO PRIVADO" in json.dumps(client.llamadas):
         raise ValueError("Falló el aislamiento de privacidad en humo.")
@@ -98,6 +98,7 @@ def main(argv=None) -> int:
     sub.add_argument("banco", type=Path)
     sub.add_argument("--origen", choices=["publicos", "contraparte", "ambos"], default="publicos")
     sub.add_argument("--falso", action="store_true")
+    sub.add_argument("--entrega", action="store_true", help="Valida cantidad, corpus y evidencia conocida antes de evaluar.")
     sub = subs.add_parser("barrido")
     sub.add_argument("banco", nargs="?", type=Path, default=Path("eval/banco.csv"))
     subs.add_parser("humo", help="Verifica entorno, índice y consulta sintética sin red.")
@@ -146,7 +147,8 @@ def main(argv=None) -> int:
                     mostrar(result)
             else:
                 index.estado()
-                path, rows = evaluar(args.banco, config, index, client, origen=args.origen)
+                path, rows = evaluar(args.banco, config, index, client, origen=args.origen,
+                                     entrega=args.entrega, sintetico=args.falso)
                 mostrar_metricas(rows)
                 print(f"Respuestas para revisión manual: {path}")
                 if any(r["errores"] for r in rows):

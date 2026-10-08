@@ -1,8 +1,9 @@
 import json
+import re
+import unicodedata
 from dataclasses import asdict, dataclass, field
 
 from .config import Config
-from .fragmentos import normalizar
 from .llm import ClienteLLM
 from .modelos import Fragmento
 
@@ -25,24 +26,36 @@ class Resultado:
     citas: list[Cita] = field(default_factory=list)
     fragmentos: list[Fragmento] = field(default_factory=list)
     motivo: str = ""
+    respuesta_propuesta: str = ""
 
     @property
-    def sostenida_por_fragmento(self) -> bool:
-        return not self.abstencion and any(c.estado == "verificada" for c in self.citas)
+    def citas_verificadas(self) -> bool:
+        return not self.abstencion and bool(self.citas) and all(c.estado == "verificada" for c in self.citas)
+
+    @property
+    def sostenida_por_fragmento(self) -> bool | None:
+        """Compatibilidad: None exige revisión humana; existencia no equivale a fidelidad."""
+        return None if self.citas_verificadas else False
 
     def como_dict(self) -> dict:
-        return asdict(self)
+        return {**asdict(self), "citas_textuales_validas": self.citas_verificadas,
+                "sostenida_por_fragmento": self.sostenida_por_fragmento,
+                "estado_respaldo": "Pendiente de revisión" if self.citas_verificadas else "Sin respuesta respaldada"}
+
+
+def texto_literal(texto):
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", texto).casefold()).strip()
 
 
 def verificar_citas(citas: list[dict], fuentes: list[Fragmento]) -> list[Cita]:
     verified = []
     for raw in citas:
         document, page, quote = raw["documento"], raw["pagina"], raw["cita_textual"]
-        normalized = normalizar(quote)
+        normalized = texto_literal(quote)
         support = next((
             f.texto for f in fuentes
             if f.documento == document and f.pagina == page
-            and normalized and normalized in normalizar(f.texto)
+            and normalized and normalized in texto_literal(f.texto)
         ), "")
         verified.append(Cita(document, page, quote, "verificada" if support else "no_verificada", support))
     return verified
@@ -75,7 +88,13 @@ def interpretar(raw: str | dict, fuentes: list[Fragmento]) -> Resultado:
     if data["abstencion"]:
         return Resultado(citas=cites, motivo="abstencion_modelo")
     if not data["respuesta"].strip() or not any(c.estado == "verificada" for c in cites):
-        return Resultado(citas=cites, motivo="sin_citas_verificadas")
+        return Resultado(citas=cites, motivo="sin_citas_verificadas", respuesta_propuesta=data["respuesta"])
+    if any(c.estado != "verificada" for c in cites):
+        return Resultado(citas=cites, motivo="citas_invalidas", respuesta_propuesta=data["respuesta"])
+    # Guardia conservadora: no confundir 20 con 200. No certifica equivalencia semántica.
+    cifras = lambda text: set(re.findall(r"(?<!\w)\d+(?:[.,]\d+)*(?:\s*%)?", text))
+    if cifras(data["respuesta"]) - cifras(" ".join(c.cita_textual for c in cites)):
+        return Resultado(citas=cites, motivo="cifras_sin_respaldo", respuesta_propuesta=data["respuesta"])
     return Resultado(data["respuesta"], False, cites)
 
 

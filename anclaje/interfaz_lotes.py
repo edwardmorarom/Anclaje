@@ -7,7 +7,7 @@ from .operaciones import controles as st
 from .embeddings import EmbeddingsLocales, EmbedderFalso
 from .evaluar import sello
 from .llm import ClienteDeepSeek, ClienteFalso, ErrorLLM
-from .lotes import analizar_fila, cargar_memoria_agente, exportar_csv, guardar_memoria_agente
+from .lotes import analizar_fila, cargar_memoria_agente, exportar_csv, exportar_excel, guardar_memoria_agente
 from .recorrido import estado_proyecto
 from .responder import origenes_permitidos
 from .operaciones import programar
@@ -35,7 +35,8 @@ def mostrar_lotes(config, indice, demo):
             st.success("Informe guardado localmente. No se incorpora al corpus de fuentes.")
         if memory.get("informe"):
             st.caption(f"Informe activo: {memory.get('informe_nombre', memory['informe'])}. Para páginas estables, usa PDF; en DOCX son estimadas.")
-    columns = ["Pregunta", "Respuesta conocida", "Página informe confirmada"]
+    columns = ["Pregunta", "Respuesta conocida", "Página informe confirmada", "Tipo", "Documento conocido",
+               "Página conocida", "Cita conocida", "Clave del gestor", "Afirmación del informe"]
     if "tabla_preguntas" not in st.session_state:
         initial_questions = memory.get("preguntas")
         seed = config.docs_dir.parent / "evaluacion/mesa_inicial.json"
@@ -43,7 +44,7 @@ def mostrar_lotes(config, indice, demo):
             try:
                 loaded = json.loads(seed.read_text(encoding="utf-8"))
                 if not isinstance(loaded, list) or not all(
-                    isinstance(row, dict) and all(isinstance(row.get(column), str) for column in columns)
+                    isinstance(row, dict) and all(isinstance(row.get(column, ""), str) for column in columns)
                     for row in loaded
                 ):
                     raise ValueError("Formato de mesa inicial inválido.")
@@ -59,6 +60,7 @@ def mostrar_lotes(config, indice, demo):
                               "Respuesta conocida": st.column_config.TextColumn("Respuesta conocida", width="large"),
                               "Página informe confirmada": st.column_config.TextColumn("Página del informe (opcional)", help="Solo escribe la página que hayas comprobado tú.")})
     questions = rows.fillna("").to_dict("records")
+    st.caption("Completa Tipo (en_corpus/fuera_de_corpus), ubicación conocida y clave del gestor para documentar la evaluación. La tabla de consultas es un borrador; la entrega se valida en Evaluar.")
     memory["preguntas"] = questions
     mode = st.selectbox("Cómo responder este lote", ["C", "A"], key="lote_tratamiento",
                         format_func=lambda value: "C · Con mis fuentes" if value == "C" else "A · Sin fuentes")
@@ -105,10 +107,11 @@ def mostrar_lotes(config, indice, demo):
                 memory["resultados"].append(result)
                 guardar_memoria_agente(memory_path, memory)
                 (folder / memory["archivo_csv"]).write_bytes(exportar_csv(memory["resultados"]))
+                (folder / memory["archivo_csv"]).with_suffix('.xlsx').write_bytes(exportar_excel(memory["resultados"]))
                 progress.progress((position + 1) / len(active), text=f"Analizadas {position + 1} de {len(active)} preguntas")
             st.success("Lote guardado. Revisa la comparación y las ubicaciones antes de usarlo como evidencia.")
             st.caption(f"CSV guardado en: {folder / memory['archivo_csv']}")
-            if mode == "C" and memory["resultados"] and not any(row.get("error") or row.get("motivo_respuesta") in {"salida_json_invalida", "sin_citas_verificadas"} for row in memory["resultados"]):
+            if mode == "C" and memory["resultados"] and not any(row.get("error") or row.get("motivo_respuesta") in {"salida_json_invalida", "sin_citas_verificadas", "citas_invalidas", "cifras_sin_respaldo"} for row in memory["resultados"]):
                 marcar_avance(config, "consulta", demo)
         programar("Analizando las preguntas del lote...", analizar)
     if not ready:
@@ -123,7 +126,13 @@ def mostrar_lotes(config, indice, demo):
         table = table.rename(columns={"pregunta": "Pregunta", "respuesta_conocida": "Respuesta conocida", "respuesta": "Respuesta obtenida", "coincidencia": "Coincidencia semántica", "explicacion": "Explicación", "documento_fuente": "Fuente", "pagina_fuente": "Página de la fuente", "paginas_informe_sugeridas": "Páginas sugeridas del informe", "pagina_informe_confirmada": "Página confirmada del informe", "error": "Error"})
         st.dataframe(table, hide_index=True, width="stretch")
         st.download_button("Descargar resultados CSV · separado por ;", data=exportar_csv(results),
-                           file_name="consultas_anclaje.csv", mime="text/csv", key="descargar_lote")
+                           file_name="consultas_anclaje.csv", mime="text/csv; charset=utf-8", key="descargar_lote")
+        st.download_button("Descargar Excel · conserva tildes y ñ", data=exportar_excel(results),
+                           file_name="consultas_anclaje.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="descargar_lote_excel")
+        st.caption("CSV: UTF-8 y delimitador ;. Si Excel muestra caracteres incorrectos, importa desde Datos → Desde texto/CSV con UTF-8, o utiliza el XLSX.")
+        for row in results:
+            if row.get("aviso_codificacion"):
+                st.warning(row["aviso_codificacion"])
         for position, result in enumerate(results, 1):
             if result.get("ubicaciones_informe"):
                 with st.expander(f"{position}. Ubicaciones sugeridas en el informe base"):

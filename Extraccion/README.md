@@ -37,14 +37,14 @@ Extraccion/local/
 3. En Preparar, reconstruye el índice. Puede descargar pesos si no están disponibles. Ocho documentos todavía no alcanzan los diez exigidos por el enunciado: agrega al menos dos fuentes pertinentes y ajusta el banco antes de la evaluación final.
 4. En Consultar → mesa de preguntas, carga el DOCX de `informe_base` y pulsa Guardar informe base. Para páginas estables, exporta el mismo informe a PDF desde Word y carga esa versión. Las páginas DOCX son aproximadas.
 5. La mesa carga automáticamente las 20 preguntas preparadas si no tienes preguntas guardadas. Conserva las sesiones existentes. El CSV con punto y coma es un borrador de revisión, no un banco evaluable: faltan documentos y páginas, y varias preguntas tratan artículos excluidos de la selección C. Las preguntas 18–20 son abstenciones propuestas, pendientes de comprobar en el corpus definitivo.
-6. Solo tras verificar respuestas y ubicaciones, crea el banco de evaluación con columnas `pregunta,respuesta_conocida,documento,pagina,tipo` y separador coma, como `eval/banco_ejemplo.csv`. El separador del banco de evaluación actual es distinto del CSV de resultados, que usa punto y coma.
+6. Solo tras verificar respuestas y ubicaciones, crea el banco de evaluación con columnas `pregunta,respuesta_conocida,documento,pagina,tipo`, como `eval/banco_ejemplo.csv`. Admite coma o punto y coma en UTF-8. Para validar entrega agrega `cita_conocida,clave_gestor,verificado_por,fecha_verificacion`. Las exportaciones usan punto y coma y también ofrecen XLSX.
 7. Ejecuta Evaluar A/C y revisa manualmente fidelidad, citas y abstenciones. B se realiza externamente. Cada pregunta bibliográfica del experimento debe ejecutarse en A, B y C, independientemente del responsable de las carpetas.
 
 La clave se configura en `.env` como `DEEPSEEK_API_KEY`. El informe se analiza localmente para sugerir ubicaciones; las preguntas y fragmentos públicos recuperados sí se envían a DeepSeek al consultar. No se necesitan claves para preparar materiales o ejecutar pruebas.
 
 ## Límites conocidos
 
-Una cita existente no demuestra por sí sola que toda la respuesta esté respaldada. La validación actual permite contradicciones y mezclas de citas válidas e inválidas: consulta `AUDITORIA_REQUISITOS.md`. Esta integración no corrige ese problema ni certifica cumplimiento completo. La comparación semántica tampoco sustituye la revisión documental.
+Una cita existente no demuestra por sí sola que toda la respuesta esté respaldada. La validación v2 rechaza citas mixtas y cifras sin respaldo textual; otras contradicciones requieren revisión documental. Consulta `SALIDA_RUBRICA.md` y la auditoría histórica `AUDITORIA_REQUISITOS.md`. No se certifica cumplimiento completo. La comparación semántica tampoco sustituye la revisión documental.
 
 Se conservan los fallos de búsqueda en `FALLOS_BUSQUEDA.md`. DOI y URL se registran como declarados, sin afirmar que fueron abiertos o verificados en esta integración. No se descargan enlaces de la captura. El README de Edward contiene seis DOI y dos URL institucionales.
 

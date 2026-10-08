@@ -8,7 +8,7 @@ top_k: 4
 similarity_threshold: 0.45
 llm_model: deepseek-chat
 temperature: 0.0
-protocol: protocolo/v1.md
+protocol: protocolo/v2.md
 max_tokens: 1800
 timeout: 60
 sweep:

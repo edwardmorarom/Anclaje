@@ -7,6 +7,10 @@ La configuración usa el corpus local de Edward en `Extraccion/local/corpus` y u
 Harold y Natalia se conservan como evidencias A/B. Consulta también el [diagnóstico de búsqueda](Extraccion/FALLOS_BUSQUEDA.md)
 y la [auditoría de requisitos](AUDITORIA_REQUISITOS.md) antes de interpretar resultados como cumplimiento académico.
 
+La [guía de salida y rúbrica](SALIDA_RUBRICA.md) describe CSV/XLSX con tildes, los campos
+obligatorios, validación de entrega y revisión de fidelidad. El protocolo activo es v2;
+v1 se conserva. Una cita existente no se etiqueta automáticamente como respuesta sostenida.
+
 Base para «Nada sin fuente» (Estadística, USTA): recuperación local de documentos
 en español, generación con DeepSeek, citas comprobadas por código y evaluación
 con intervalos de Wilson. Los documentos, el índice y los resultados permanecen
@@ -269,15 +273,17 @@ DeepSeek. Protege también los archivos locales: `.gitignore` no cifra los datos
 
 ## Citas, abstención y límites
 
-El protocolo `protocolo/v1.md` pide un objeto JSON con `respuesta`, `abstencion`
-y `citas`. Para cambiarlo crea `v2.md` y actualiza la ruta; conserva v1.
+El protocolo activo `protocolo/v2.md` pide un objeto JSON con `respuesta`, `abstencion`
+y `citas`. Se conserva `v1.md`; cualquier cambio posterior debe versionarse.
 Se usa [JSON mode de DeepSeek](https://api-docs.deepseek.com/guides/json_mode/).
 
 Cada cita debe coincidir con documento y página recuperados, y su texto debe
-aparecer en un fragmento enviado, normalizando espacios, mayúsculas y tildes.
-Las inválidas aparecen como `no_verificada`. Si no hay fuentes sobre el umbral,
-no se llama al LLM. Si no hay ninguna cita válida, o la salida JSON es inválida,
-la respuesta se convierte en «No está en las fuentes.».
+aparecer en un fragmento enviado, normalizando espacios, mayúsculas y composición
+Unicode, conservando tildes y ñ. Las inválidas aparecen como `no_verificada`.
+Si no hay fuentes sobre el umbral, no se llama al LLM. Si hay citas inválidas,
+faltan citas válidas, aparecen cifras ausentes de las citas o el JSON es inválido,
+la respuesta se convierte en «No está en las fuentes.». La propuesta rechazada
+se conserva para auditoría. El respaldo completo permanece pendiente de revisión.
 
 La verificación demuestra existencia del texto citado. **No demuestra que todas
 las afirmaciones se deduzcan de él**: una respuesta puede mezclar una cita real
@@ -302,16 +308,17 @@ ejecución. Deja `revision_manual` vacía para tu clasificación; no usa un LLM 
 | Métrica | Denominador |
 | --- | --- |
 | hit@k, C | Preguntas válidas en corpus; documento y página presentes en top_k, antes del umbral |
-| Cita verificada | Todas las respuestas válidas de cada tratamiento |
+| Citas textuales válidas, C | Respuestas válidas C; verifica todas las citas, no la fidelidad |
 | Abstención correcta fuera | Preguntas válidas fuera del corpus |
-| Invención fuera | Preguntas válidas fuera del corpus; respuesta sin abstención |
+| Respuesta fuera sin abstención | Preguntas válidas fuera del corpus |
+| Fidelidad revisada | Preguntas válidas en corpus con Sí/No, verificador, fecha y observación |
 
 Cada proporción incluye aciertos, n e IC95% Wilson. En A, hit@k no aplica
 (n=0); no hay citas verificadas porque no recibió fragmentos. Con n=0 la
 proporción queda vacía. Los errores de API/JSON se guardan y se reportan como
 exclusiones; compara tasas de error además de las proporciones. El CLI devuelve
-código 2 si hubo errores. «Invención fuera» es una definición operativa de
-respuesta fuera del corpus, no una comprobación universal de falsedad.
+código 2 si hubo errores. Una respuesta fuera del corpus no se etiqueta
+automáticamente como falsa. CSV y XLSX mantienen separados estos indicadores.
 
 `barrido` compara los tamaños, top_k y modelos indicados en `sweep` sin llamar
 al LLM. Indexa ambos orígenes en colecciones locales bajo `indice/barridos/`

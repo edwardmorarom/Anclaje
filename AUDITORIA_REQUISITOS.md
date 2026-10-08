@@ -2,6 +2,12 @@
 
 Fecha: 2026-10-08. Código revisado: `30df593`, rama `base-anclaje`.
 
+Actualización posterior: esta auditoría describe el estado inicial. La integración CIEX
+cambió el corpus activo a ocho PDF. La corrección documentada en `SALIDA_RUBRICA.md`
+rechaza citas mixtas y cifras sin soporte textual, comprueba ubicaciones del banco,
+separa existencia de cita de fidelidad e incorpora revisión humana y validación de entrega.
+Los requisitos académicos y evidencias humanas pendientes no se consideran completados.
+
 ## Dictamen
 
 El repositorio sirve como base técnica de un sistema de anclaje, pero todavía no permite demostrar cumplimiento completo de la actividad. Hay una diferencia fundamental entre verificar que una cita existe y verificar que toda la respuesta está respaldada por ella. El sistema comprueba principalmente lo primero.
