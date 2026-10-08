@@ -1,5 +1,12 @@
 # Anclaje
 
+## Trabajo actual: CIEX
+
+El informe base y las fuentes del equipo se preparan siguiendo [Extraccion/README.md](Extraccion/README.md).
+La configuración usa el corpus local de Edward en `Extraccion/local/corpus` y un índice separado en `indice/ciex`.
+Harold y Natalia se conservan como evidencias A/B. Consulta también el [diagnóstico de búsqueda](Extraccion/FALLOS_BUSQUEDA.md)
+y la [auditoría de requisitos](AUDITORIA_REQUISITOS.md) antes de interpretar resultados como cumplimiento académico.
+
 Base para «Nada sin fuente» (Estadística, USTA): recuperación local de documentos
 en español, generación con DeepSeek, citas comprobadas por código y evaluación
 con intervalos de Wilson. Los documentos, el índice y los resultados permanecen
@@ -46,9 +53,11 @@ y cambia `DEEPSEEK_MODEL` en tu `.env` si corresponde; no se validó una llamada
 real. Véanse el [registro de cambios](https://api-docs.deepseek.com/updates/)
 y la [API de chat](https://api-docs.deepseek.com/api/create-chat-completion/).
 
-Pon tus archivos en `docs/publicos/` o `docs/contraparte/`. Se admiten PDF, TXT,
+Pon tus archivos en las subcarpetas `publicos/` o `contraparte/` de `docs_dir`.
+La configuración CIEX actual usa `Extraccion/local/corpus`; `docs/` corresponde
+a la configuración anterior y sus archivos se conservan. Se admiten PDF, TXT,
 MD y DOCX, incluidos subdirectorios. La primera ingesta crea
-`docs/PROCEDENCIA.md`: completa archivo relativo a `docs`, origen, fecha de
+`PROCEDENCIA.md` dentro de `docs_dir`: completa archivo relativo al corpus, origen, fecha de
 obtención, licencia/permiso y persona que verificó. Se advierte de los archivos
 sin fila de procedencia. Ninguno de estos datos se incorpora a Git.
 

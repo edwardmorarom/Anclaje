@@ -1,5 +1,5 @@
-docs_dir: docs
-index_dir: indice
+docs_dir: Extraccion/local/corpus
+index_dir: indice/ciex
 results_dir: resultados
 embedding_model: BAAI/bge-m3
 chunk_size: 1000

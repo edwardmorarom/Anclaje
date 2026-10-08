@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -36,7 +37,21 @@ def mostrar_lotes(config, indice, demo):
             st.caption(f"Informe activo: {memory.get('informe_nombre', memory['informe'])}. Para páginas estables, usa PDF; en DOCX son estimadas.")
     columns = ["Pregunta", "Respuesta conocida", "Página informe confirmada"]
     if "tabla_preguntas" not in st.session_state:
-        st.session_state["lote_tabla_inicial"] = memory.get("preguntas") or [{column: "" for column in columns}]
+        initial_questions = memory.get("preguntas")
+        seed = config.docs_dir.parent / "evaluacion/mesa_inicial.json"
+        if not initial_questions and not demo and seed.is_file():
+            try:
+                loaded = json.loads(seed.read_text(encoding="utf-8"))
+                if not isinstance(loaded, list) or not all(
+                    isinstance(row, dict) and all(isinstance(row.get(column), str) for column in columns)
+                    for row in loaded
+                ):
+                    raise ValueError("Formato de mesa inicial inválido.")
+                initial_questions = loaded
+                st.info("Se cargó el banco CIEX como borrador. Verifica respuestas, fuentes y páginas antes de evaluar.")
+            except (ValueError, OSError):
+                st.warning("No se pudo cargar la mesa inicial. Puedes agregar las preguntas manualmente.")
+        st.session_state["lote_tabla_inicial"] = initial_questions or [{column: "" for column in columns}]
     initial = st.session_state["lote_tabla_inicial"]
     rows = st.data_editor(pd.DataFrame(initial, columns=columns).fillna(""), num_rows="dynamic", hide_index=True,
                           width="stretch", key="tabla_preguntas", column_config={
