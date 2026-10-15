@@ -3,6 +3,9 @@
 ## Trabajo actual: CIEX
 
 El informe base y las fuentes del equipo se preparan siguiendo [Extraccion/README.md](Extraccion/README.md).
+Los documentos solicitados están incluidos en [Extraccion/materiales](Extraccion/materiales):
+19 PDF separados por integrante, el estado del arte y el banco de preguntas DOCX.
+Ejecuta `.venv\Scripts\python.exe scripts\preparar_ciex.py` para preparar las copias de trabajo.
 La configuración usa el corpus local de Edward en `Extraccion/local/corpus` y un índice separado en `indice/ciex`.
 Harold y Natalia se conservan como evidencias A/B. Consulta también el [diagnóstico de búsqueda](Extraccion/FALLOS_BUSQUEDA.md)
 y la [auditoría de requisitos](AUDITORIA_REQUISITOS.md) antes de interpretar resultados como cumplimiento académico.
@@ -13,8 +16,9 @@ v1 se conserva. Una cita existente no se etiqueta automáticamente como respuest
 
 Base para «Nada sin fuente» (Estadística, USTA): recuperación local de documentos
 en español, generación con DeepSeek, citas comprobadas por código y evaluación
-con intervalos de Wilson. Los documentos, el índice y los resultados permanecen
-fuera de Git. Desarrollo en `base-anclaje`.
+con intervalos de Wilson. Los materiales expresamente seleccionados se incluyen en Git;
+las claves, copias operativas, índice y resultados permanecen excluidos.
+Desarrollo en `base-anclaje`.
 
 ## Instalación
 

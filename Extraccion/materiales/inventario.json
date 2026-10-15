@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "fecha_incorporacion": "2026-10-15",
+  "archivos": [
+    {
+      "archivo": "edward/Fuentes_seleccionadas/01_Torres_Berru_2021_Anomalias_contratacion.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 999909,
+      "sha256": "8da7708de8fa08aafeb151bf50fdcf9f1395b7a2c95a31653b6c494cf677fbf1"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/02_Munoz_Pla_2026_Contratacion_Espana.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 586258,
+      "sha256": "74b44225940189a3436fd4ace060c0facbad1da2c9f084996caa169b38d574e5"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/03_Moiraghi_2024_Clasificacion_CPV.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 516858,
+      "sha256": "6c834905b8bd699fbf5e00356d92a7384fd86249979eb564bbe70a6bbfc9a313"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/04_MinSalud_Coberturas_antirrabicas_2025.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 164611,
+      "sha256": "0544ffd7f4beb3fb9193ef37375092c15994eb6f503fd0571a546a579c67ad68"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/05_Vargas_Madrid_2022_Perros_Bogota.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 1547057,
+      "sha256": "45c52188c9babc70d31436dc0c61c33f5b083c418c5ada02f31e6474962d05f9"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/06_Moran_2022_Poblacion_canina_Guatemala.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 3535332,
+      "sha256": "31c8d64c8c3ecec4209803295fa81efe1814892b43a7a4b57c519b7ad303146b"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/07_Sousa_2025_DATASIMA.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 724104,
+      "sha256": "8028c14a32b6b0be2cc741483ce568d8e99358e49e471c45427180fa70cf868b"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/08_Teng_2022_Tablas_vida_perros.pdf",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "fuente",
+      "bytes": 1524628,
+      "sha256": "f35d072e01bb23711f5bc0a3f8a7e6e02aa2e419865817d8760b37d041986f32"
+    },
+    {
+      "archivo": "Harold/2203.05794v1.pdf",
+      "responsable": "Harold",
+      "tratamiento": "A",
+      "uso": "evidencia",
+      "bytes": 496447,
+      "sha256": "3d7ea2fbe10a306bc687c4aa8d07780476ebc9e33a4919ca92ee2f02423c89c4"
+    },
+    {
+      "archivo": "Harold/A comparison of population estimation techniques for individually unidentifiable freeroaming dogs.pdf",
+      "responsable": "Harold",
+      "tratamiento": "A",
+      "uso": "evidencia",
+      "bytes": 1290199,
+      "sha256": "cd9bc848b98ca24dd22b71e11c50f60de4874bcee537f4713ebb1d8d30ea09d2"
+    },
+    {
+      "archivo": "Harold/Fraud, corruption, and collusion in public procurement activities, a systematic literature review on data-driven methods.pdf",
+      "responsable": "Harold",
+      "tratamiento": "A",
+      "uso": "evidencia",
+      "bytes": 1406505,
+      "sha256": "2dc03b023b1ec50b30726c2cfd3afd3a8a63bfa7bb5a7850de2ed284121a4870"
+    },
+    {
+      "archivo": "Harold/Free-Roaming Dog Surveys in Quito, Ecuador Experiences, Lessons Learned, and Future Work.pdf",
+      "responsable": "Harold",
+      "tratamiento": "A",
+      "uso": "evidencia",
+      "bytes": 422644,
+      "sha256": "7602be97d0258d9ef597db523012090f19eaab75c8d451f6e75605bfad642f16"
+    },
+    {
+      "archivo": "Harold/Life tables of annual life expectancy and mortality for companion dogs in the United Kingdom.pdf",
+      "responsable": "Harold",
+      "tratamiento": "A",
+      "uso": "evidencia",
+      "bytes": 1524628,
+      "sha256": "f35d072e01bb23711f5bc0a3f8a7e6e02aa2e419865817d8760b37d041986f32"
+    },
+    {
+      "archivo": "natalia/2602.16731v1.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 586258,
+      "sha256": "74b44225940189a3436fd4ace060c0facbad1da2c9f084996caa169b38d574e5"
+    },
+    {
+      "archivo": "natalia/a-brief-review-of-deep-learning-methods-in-mortality-forecasting.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 1008252,
+      "sha256": "99ae735a7f5bac151f26c9de4fb5c9b1b394ecf95962bbb66d32d846e29d3473"
+    },
+    {
+      "archivo": "natalia/electronics-10-02873-v3.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 999909,
+      "sha256": "8da7708de8fa08aafeb151bf50fdcf9f1395b7a2c95a31653b6c494cf677fbf1"
+    },
+    {
+      "archivo": "natalia/fine-grained-mortality-forecasting-with-deep-learning.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 1291333,
+      "sha256": "293f1f259f993bc38e9ee389fbf9c26b0113a0eeea04bf3215edf1acb27b8c59"
+    },
+    {
+      "archivo": "natalia/vetsci-12-00028-v2.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 724104,
+      "sha256": "8028c14a32b6b0be2cc741483ce568d8e99358e49e471c45427180fa70cf868b"
+    },
+    {
+      "archivo": "natalia/Vol12-N1-Control_poblacion_canina.pdf",
+      "responsable": "Natalia",
+      "tratamiento": "B",
+      "uso": "evidencia",
+      "bytes": 237957,
+      "sha256": "3e91fe766122beae1486a7571ae017c78926b9b56b156868fd5fabf82bdc1512"
+    },
+    {
+      "archivo": "edward/Estado_del_arte_Mercado_Publico_y_Mascoplan_solo_PDF.docx",
+      "responsable": "Equipo",
+      "tratamiento": "informe_base",
+      "uso": "documento_a_auditar",
+      "bytes": 46138,
+      "sha256": "dc0b50d167199af8cc26793000c6bf2f5cfa704b98eb519f0f217a98538b46b4"
+    },
+    {
+      "archivo": "edward/Fuentes_seleccionadas/README_fuentes.md",
+      "responsable": "Edward",
+      "tratamiento": "C",
+      "uso": "identificadores_declarados",
+      "bytes": 3768,
+      "sha256": "f92437dc8aed0193d79abf375cc2ca051798f6d7bf475b2a3c991452aa31e646"
+    },
+    {
+      "archivo": "evaluacion/Preguntas_CIEX_en_cuadro.docx",
+      "responsable": "Equipo",
+      "tratamiento": "evaluacion",
+      "uso": "banco_pendiente_verificacion",
+      "bytes": 39318,
+      "sha256": "4bfb96e811e6d54670de837931083e65e64caf15563ae40f9c16d0ed3be96f2a"
+    }
+  ],
+  "nota": "La copia y los hashes no acreditan verificacion bibliografica. A/B permanecen separados del corpus C."
+}

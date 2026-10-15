@@ -91,8 +91,11 @@ def preparar(base, banco, destino):
 
 
 if __name__ == '__main__':
+    materiales = Path(__file__).resolve().parents[1] / 'Extraccion/materiales'
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--base', type=Path, required=True, help='Carpeta que contiene edward, Harold y natalia.')
-    parser.add_argument('--banco', type=Path, required=True, help='Banco DOCX con tabla de preguntas.')
+    parser.add_argument('--base', type=Path, default=materiales,
+                        help='Carpeta que contiene edward, Harold y natalia; por defecto Extraccion/materiales del repositorio.')
+    parser.add_argument('--banco', type=Path, default=materiales / 'evaluacion/Preguntas_CIEX_en_cuadro.docx',
+                        help='Banco DOCX; por defecto la copia incluida en Extraccion/materiales/evaluacion.')
     args = parser.parse_args()
     preparar(args.base.resolve(), args.banco.resolve(), Path(__file__).resolve().parents[1] / 'Extraccion/local')

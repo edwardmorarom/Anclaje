@@ -3,13 +3,44 @@
 El estado del arte activo es `Estado_del_arte_Mercado_Publico_y_Mascoplan_solo_PDF.docx`.
 El informe se audita contra los artículos; no se incorpora como fuente para que sus propias afirmaciones no se validen circularmente.
 
-## Preparar los materiales en este computador
+## Materiales incluidos en GitHub
+
+Los archivos solicitados se publican en `Extraccion/materiales`:
+
+```text
+materiales/
+  edward/
+    Estado_del_arte_Mercado_Publico_y_Mascoplan_solo_PDF.docx
+    Fuentes_seleccionadas/     8 PDF y README con DOI/URL declarados
+  Harold/                     5 PDF del tratamiento A
+  natalia/                    6 PDF del tratamiento B
+  evaluacion/
+    Preguntas_CIEX_en_cuadro.docx
+  inventario.json             rutas, responsables, tamaños y SHA-256
+```
+
+El registro de fallos de búsqueda está en [FALLOS_BUSQUEDA.md](FALLOS_BUSQUEDA.md).
+Los PDF se conservan separados por integrante, incluso cuando el mismo artículo
+aparece en dos grupos. Eso no aumenta el número de fuentes distintas del corpus C.
+
+## Preparar desde una copia del repositorio
 
 Desde la raíz del repositorio, en PowerShell:
 
 ```powershell
-.venv\Scripts\python.exe scripts\preparar_ciex.py --base "C:\Users\edwar\Desktop\lll" --banco "C:\Users\edwar\Downloads\Preguntas_CIEX_en_cuadro (1).docx"
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe scripts\preparar_ciex.py
 .venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Si ya tienes `.venv` y las dependencias, ejecuta únicamente los dos últimos comandos.
+La preparación toma por defecto los materiales incluidos en GitHub; no depende de
+las rutas `Desktop/lll` o `Downloads` de Edward. Para usar otros originales conserva
+las opciones `--base` y `--banco`:
+
+```powershell
+.venv\Scripts\python.exe scripts\preparar_ciex.py --base "C:\Users\edwar\Desktop\lll" --banco "C:\Users\edwar\Downloads\Preguntas_CIEX_en_cuadro (1).docx"
 ```
 
 La preparación copia los originales, registra SHA-256 y extrae las preguntas sin llamar a ninguna API. Puedes repetirla con los mismos archivos. Rechaza originales modificados con destino ya ocupado para evitar sustituir versiones sin revisión. Conserva las modificaciones manuales del banco borrador y de procedencia.
@@ -48,4 +79,9 @@ Una cita existente no demuestra por sí sola que toda la respuesta esté respald
 
 Se conservan los fallos de búsqueda en `FALLOS_BUSQUEDA.md`. DOI y URL se registran como declarados, sin afirmar que fueron abiertos o verificados en esta integración. No se descargan enlaces de la captura. El README de Edward contiene seis DOI y dos URL institucionales.
 
-Git publica las instrucciones y el preparador, no los PDF, el informe, las preguntas, la clave ni los resultados locales. En otro computador hay que obtener legítimamente los originales y ejecutar la preparación con sus propias rutas.
+Git publica los 19 PDF, el informe base, el banco DOCX, el README de fuentes de Edward,
+el inventario y las instrucciones por solicitud expresa del equipo. `Extraccion/local`
+sigue excluida: contiene copias operativas y borradores. La clave `.env`, los índices,
+los resultados y cualquier documentación de contraparte fuera de esta selección
+permanecen excluidos. El preparador copia desde `materiales` a `local` sin llamadas
+a DeepSeek. La indexación se ejecuta después desde el paso Preparar.
