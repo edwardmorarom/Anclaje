@@ -1,0 +1,4 @@
+# Conservar los bytes originales y los SHA-256 de los materiales publicados.
+Extraccion/materiales/** -text -whitespace
+Extraccion/materiales/**/*.pdf binary
+Extraccion/materiales/**/*.docx binary

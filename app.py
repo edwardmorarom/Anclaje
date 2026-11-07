@@ -85,9 +85,9 @@ def mostrar_consulta(config, index, demo):
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(json.dumps({"pregunta": pregunta, "tratamiento": treatment, **result.como_dict()}, ensure_ascii=False, indent=2), encoding="utf-8")
             st.session_state["consulta_salida"] = str(output)
-            if treatment == "C" and result.sostenida_por_fragmento:
+            if treatment == "C" and result.citas_verificadas:
                 st.session_state["consulta_verificada"] = True
-            if treatment == "C" and result.motivo not in {"salida_json_invalida", "sin_citas_verificadas"}:
+            if treatment == "C" and result.motivo not in {"salida_json_invalida", "sin_citas_verificadas", "citas_invalidas", "cifras_sin_respaldo"}:
                 marcar_avance(config, "consulta", demo)
         programar("Preparando la respuesta…", consultar)
     if previous := st.session_state.get("consulta_resultado"):
@@ -95,6 +95,8 @@ def mostrar_consulta(config, index, demo):
         if result_treatment != treatment:
             return
         st.write(result.respuesta)
+        if treatment == "C":
+            st.caption("Citas textuales comprobadas; respaldo de la respuesta pendiente de revisión humana." if result.citas_verificadas else f"Motivo: {result.motivo or 'abstención'}")
         if any(c.estado == "no_verificada" for c in result.citas):
             st.warning("Hay citas no verificadas. Revisa la respuesta manualmente.")
         for cite in result.citas:

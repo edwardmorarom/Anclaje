@@ -1,6 +1,4 @@
 """Consultas por lote, comparación semántica y memoria local versionada."""
-import csv
-import io
 import json
 from pathlib import Path
 from datetime import datetime, timezone
@@ -8,6 +6,7 @@ from datetime import datetime, timezone
 from .ingesta import leer_archivo
 from .llm import ErrorLLM
 from .responder import control, responder
+from .exportaciones import csv_bytes, xlsx_bytes, avisos_unicode
 
 
 def guardar_memoria_agente(path, datos):
@@ -110,27 +109,43 @@ def analizar_fila(fila, config, indice, cliente, *, tratamiento="C", origen="pub
         except (ValueError, OSError) as error:
             location_error = str(error)
     cites = [cite for cite in result.citas if cite.estado == "verificada"]
-    return {"pregunta": pregunta, "respuesta_conocida": conocida, "respuesta": result.respuesta,
+    row = {"pregunta": pregunta, "respuesta_conocida": conocida, "respuesta": result.respuesta,
             **comparison, "tratamiento": tratamiento, "origen": origen, "modelo": config.llm_model if not demo else "cliente-falso",
             "documento_fuente": " | ".join(cite.documento for cite in cites),
             "pagina_fuente": " | ".join(str(cite.pagina) for cite in cites),
             "cita_fuente": " | ".join(cite.cita_textual for cite in cites),
+            "citas": json.dumps([vars(c) for c in result.citas], ensure_ascii=False),
+            "tipo": str(fila.get("Tipo", "sin_clasificar")),
+            "documento_conocido": str(fila.get("Documento conocido", "")),
+            "pagina_conocida": str(fila.get("Página conocida", "")),
+            "cita_conocida": str(fila.get("Cita conocida", "")),
+            "clave_gestor": str(fila.get("Clave del gestor", "")),
+            "abstencion": result.abstencion, "citas_textuales_validas": result.citas_verificadas,
+            "sostenida_por_fragmento": "No aplica" if fila.get("Tipo") == "fuera_de_corpus" else "Pendiente",
+            "verificado_por": "", "fecha_verificacion": "", "observaciones_revision": "",
+            "caso_fallo": "", "causa_tecnica": "", "evidencia_fallo": "",
+            "afirmacion_informe": str(fila.get("Afirmación del informe", "")),
+            "respuesta_propuesta_rechazada": result.respuesta_propuesta,
             "informe_base": Path(informe).name if informe else "",
             "paginas_informe_sugeridas": " | ".join(str(item["pagina"]) for item in candidates),
             "pagina_informe_confirmada": str(fila.get("Página informe confirmada", "") or ""),
             "ubicaciones_informe": candidates, "error_ubicacion": location_error,
             "revision_manual": "", "motivo_respuesta": result.motivo, "error": ""}
+    row["aviso_codificacion"] = avisos_unicode(row)
+    return row
+
+
+CAMPOS_RESULTADO = ["pregunta", "respuesta_conocida", "respuesta", "coincidencia", "explicacion", "tratamiento", "origen", "modelo",
+              "documento_fuente", "pagina_fuente", "cita_fuente", "informe_base", "paginas_informe_sugeridas",
+              "pagina_informe_confirmada", "tipo", "documento_conocido", "pagina_conocida", "cita_conocida", "clave_gestor",
+              "abstencion", "citas_textuales_validas", "sostenida_por_fragmento", "verificado_por", "fecha_verificacion",
+              "observaciones_revision", "afirmacion_informe", "caso_fallo", "causa_tecnica", "evidencia_fallo",
+              "respuesta_propuesta_rechazada", "citas", "revision_manual", "motivo_respuesta", "error_ubicacion", "error", "aviso_codificacion"]
 
 
 def exportar_csv(resultados):
-    fields = ["pregunta", "respuesta_conocida", "respuesta", "coincidencia", "explicacion", "tratamiento", "origen", "modelo",
-              "documento_fuente", "pagina_fuente", "cita_fuente", "informe_base", "paginas_informe_sugeridas",
-              "pagina_informe_confirmada", "revision_manual", "motivo_respuesta", "error_ubicacion", "error"]
-    buffer = io.StringIO(newline="")
-    writer = csv.DictWriter(buffer, fieldnames=fields, delimiter=";", extrasaction="ignore")
-    writer.writeheader()
-    for result in resultados:
-        # Excel no debe ejecutar las respuestas como fórmulas.
-        writer.writerow({key: "'" + value if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")) else value
-                         for key, value in result.items()})
-    return buffer.getvalue().encode("utf-8-sig")
+    return csv_bytes(resultados, CAMPOS_RESULTADO)
+
+
+def exportar_excel(resultados):
+    return xlsx_bytes(resultados, CAMPOS_RESULTADO)

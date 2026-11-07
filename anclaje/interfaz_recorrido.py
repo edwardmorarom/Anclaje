@@ -1,10 +1,12 @@
 from dataclasses import asdict, replace
+import csv
+import pandas as pd
 
 from .operaciones import controles as st
 
 from .biblioteca import actualizar_indice
 from .diseno import mostrar_portada
-from .evaluar import evaluar, leer_banco
+from .evaluar import evaluar, leer_banco, guardar_revision
 from .llm import ClienteDeepSeek, ClienteFalso
 from .recorrido import PASOS, agregar_pregunta, importar_banco, resumen_banco, ruta_banco
 from .responder import control
@@ -16,7 +18,7 @@ CAMPOS = {
     "carpeta_fuentes", "subcarpetas_fuentes", "metodo_importacion", "origen_importacion",
     "permiso_importacion", "verificador_importacion", "tratamiento_archivos",
     "tratamiento_consulta", "origen_consulta", "pregunta_consulta", "evaluacion_falsa", "origen_evaluacion",
-    "banco_pregunta", "banco_respuesta", "banco_tipo", "banco_documento", "banco_pagina",
+    "banco_pregunta", "banco_respuesta", "banco_tipo", "banco_documento", "banco_pagina", "evaluacion_entrega",
 }
 PREFIJOS = ("memoria_", "tratamiento_importacion:", "seleccion_fuentes:", "grupo_fuentes:", "grupo_archivos:")
 
@@ -140,11 +142,16 @@ def mostrar_evaluacion(config, index, estado, demo):
             st.caption("Para fuera_de_corpus deja la ubicación vacía; la respuesta esperada es No está en las fuentes.")
             document = st.text_input("Documento relativo a docs", placeholder="publicos/edward/articulo.pdf", key="banco_documento")
             page = st.number_input("Página", min_value=1, value=1, step=1, key="banco_pagina")
+            quote = st.text_area("Cita textual de la respuesta conocida", key="banco_cita")
+            manager = st.text_input("Clave en el gestor de referencias", key="banco_clave")
+            verifier = st.text_input("Quién verificó la respuesta conocida", key="banco_verificador")
+            verified_date = st.text_input("Fecha de verificación (AAAA-MM-DD)", key="banco_fecha")
             add = st.form_submit_button("Guardar pregunta", key="agregar_pregunta")
         if add:
             questions = agregar_pregunta(config, {"pregunta": text, "respuesta_conocida": known if kind == "en_corpus" else known or "No está en las fuentes.",
                                                   "documento": document if kind == "en_corpus" else "", "pagina": page if kind == "en_corpus" else None,
-                                                  "tipo": kind}, demo)
+                                                  "tipo": kind, "cita_conocida": quote, "clave_gestor": manager,
+                                                  "verificado_por": verifier, "fecha_verificacion": verified_date}, demo)
             st.success("Pregunta guardada. Ya puedes agregar la siguiente.")
     with st.expander("Usar un banco CSV existente"):
         uploaded = st.file_uploader("Seleccionar banco de evaluación", type=["csv"], key="archivo_banco")
@@ -167,6 +174,8 @@ def mostrar_evaluacion(config, index, estado, demo):
     if demo and "evaluacion_falsa" not in st.session_state:
         st.session_state["evaluacion_falsa"] = True
     fake = st.checkbox("Practicar con cliente falso (sin API)", key="evaluacion_falsa", disabled=demo)
+    delivery = st.checkbox("Validar requisitos de entrega antes de ejecutar", key="evaluacion_entrega", disabled=demo or fake)
+    st.caption("Entrega: 15–20 preguntas, tres fuera, corpus de 10–40 documentos, cita conocida localizada, clave del gestor, verificador y fecha. Ensayo permite un banco pequeño; siempre comprueba documentos y páginas en modo real.")
     origin = st.selectbox("Origen para evaluar C", ["publicos", "contraparte", "ambos"], key="origen_evaluacion")
     ready = bool(questions) and estado["indice_listo"] and (fake or estado["clave_configurada"])
     st.caption("A responde sin fuentes y C recibe los fragmentos recuperados. En modo real se envían preguntas y fuentes permitidas a DeepSeek. B y la revisión de referencias se realizan con tu herramienta bibliográfica externa.")
@@ -175,7 +184,7 @@ def mostrar_evaluacion(config, index, estado, demo):
         client = ClienteFalso() if fake else ClienteDeepSeek(config)
         def medir():
             invalidar_avance(config, "evaluacion", demo)
-            output, metrics = evaluar(path, run_config, index, client, origen=origin)
+            output, metrics = evaluar(path, run_config, index, client, origen=origin, entrega=delivery and not fake, sintetico=fake)
             st.session_state["evaluacion_resultado"] = (output, metrics, fake)
             if not any(row["errores"] for row in metrics):
                 marcar_avance(config, "evaluacion", demo)
@@ -187,15 +196,42 @@ def mostrar_evaluacion(config, index, estado, demo):
         failures = max(row["errores"] for row in metrics)
         if failures:
             st.warning("Hubo consultas que no se completaron. Sus errores están guardados y se excluyen de las proporciones.")
-        labels = {"hit@k": "Documento y página recuperados", "cita_verificada": "Respuesta con cita verificada",
-                  "abstencion_correcta_fuera": "Abstención correcta fuera del corpus", "invencion_fuera": "Respuesta fuera del corpus sin abstención"}
+        labels = {"hit@k": "Documento y página recuperados", "citas_textuales_validas": "Citas existentes (no certifica fidelidad)",
+                  "abstencion_correcta_fuera": "Abstención fuera del corpus", "respuesta_fuera_sin_abstencion": "Respuesta fuera del corpus sin abstención",
+                  "fidelidad_revisada": "Respuestas sostenidas según revisión humana"}
         table = [{"Tratamiento": row["tratamiento"], "Indicador": labels[row["metrica"]],
                   "Proporción": f"{row['proporcion']:.1%}" if row["proporcion"] is not None else "Sin datos",
                   "IC 95 % Wilson": f"[{row['ic95_inferior']:.1%}, {row['ic95_superior']:.1%}]" if row["n"] else "Sin datos",
                   "Preguntas evaluadas": row["n"], "Errores excluidos": row["errores"]} for row in metrics]
         st.dataframe(table, hide_index=True, width="stretch")
         st.caption("El indicador de recuperación usa las preguntas en corpus; abstención e invención usan las preguntas fuera del corpus. En A no aplica recuperación. Los intervalos muestran incertidumbre con el tamaño de muestra indicado.")
-        st.download_button("Descargar respuestas para revisión manual", data=output.read_bytes(), file_name=output.name, mime="text/csv")
-        st.info("Completa revision_manual en el CSV. Una cita existente puede estar mal interpretada. Usa estos resultados y un caso de fallo real en la memoria.")
+        st.download_button("Descargar respuestas CSV · separado por ;", data=output.read_bytes(), file_name=output.name, mime="text/csv; charset=utf-8")
+        if output.with_suffix('.xlsx').exists():
+            st.download_button("Descargar evaluación Excel", data=output.with_suffix('.xlsx').read_bytes(), file_name=output.with_suffix('.xlsx').name,
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        if output.with_suffix('.md').exists():
+            st.download_button("Descargar guía de evidencias y pendientes", data=output.with_suffix('.md').read_bytes(), file_name=output.with_suffix('.md').name, mime="text/markdown; charset=utf-8")
+        with output.open(encoding='utf-8-sig', newline='') as file:
+            evidence_rows = list(csv.DictReader(file, delimiter=';'))
+        # Recuperar booleanos: no usar bool('False'), que devolvería True.
+        for row in evidence_rows:
+            for key in ('abstencion', 'hit', 'citas_textuales_validas'):
+                row[key] = row.get(key) == 'True' if row.get(key) in {'True', 'False'} else row.get(key, '')
+            row['pagina'] = int(row['pagina']) if row.get('pagina') else None
+        with st.expander("Revisar fidelidad y documentar el caso de fallo"):
+            st.write("Abre cada fuente y decide si sostiene la respuesta completa. La coincidencia semántica o una cita existente no sustituyen esta revisión.")
+            review_fields = ['sostenida_por_fragmento', 'verificado_por', 'fecha_verificacion', 'observaciones_revision', 'caso_fallo', 'causa_tecnica', 'evidencia_fallo']
+            edited = st.data_editor(pd.DataFrame(evidence_rows)[['pregunta', 'tratamiento', 'respuesta_obtenida', *review_fields]],
+                                   hide_index=True, disabled=['pregunta', 'tratamiento', 'respuesta_obtenida'],
+                                   key=f'revision:{output.name}', column_config={
+                                       'sostenida_por_fragmento': st.column_config.SelectboxColumn('¿Sostenida por fragmento real?', options=['Pendiente', 'Sí', 'No', 'No aplica']),
+                                       'caso_fallo': st.column_config.SelectboxColumn('Caso de fallo', options=['', 'Sí', 'No'])})
+            if st.button("Guardar revisión y recalcular métricas", key='guardar_revision'):
+                for original, changes in zip(evidence_rows, edited.fillna('').to_dict('records')):
+                    original.update({key: changes[key] for key in review_fields})
+                metrics = guardar_revision(output, evidence_rows)
+                st.session_state['evaluacion_resultado'] = (output, metrics, synthetic)
+                st.success("Revisión guardada. Las métricas de fidelidad cuentan solo filas revisadas.")
+        st.info("La salida incluye los campos del banco exigidos en el enunciado. Completar la revisión, el caso de fallo y los entregables externos sigue siendo obligatorio.")
     if not ready:
         st.info("Para evaluar necesitas preguntas guardadas y el índice preparado; en modo real también una clave configurada.")
